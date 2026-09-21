@@ -11,7 +11,7 @@ const ico = Buffer.alloc(22);
 ico.writeUInt16LE(1, 2); ico.writeUInt16LE(1, 4);
 ico.writeUInt16LE(1, 10); ico.writeUInt16LE(32, 12);
 ico.writeUInt32LE(png.length, 14); ico.writeUInt32LE(22, 18);
-for (const name of ['icon.ico', 'icon_installer.ico']) {
+for (const name of ['icon.ico', 'icon_installer.ico', 'tray_icon.ico']) {
   await writeFile(resolve(root, 'packages/desktop/build', name), Buffer.concat([ico, png]));
 }
 await writeFile(resolve(root, 'packages/desktop/build/icon.png'), png);

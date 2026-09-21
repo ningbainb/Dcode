@@ -2,12 +2,12 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import type { Locale } from "@zcode/shared";
 
-const MENU_KEY_NAME = "ZCode.OpenInZCode";
+const MENU_KEY_NAME = "DCode.OpenInDCode";
 const DIRECTORY_MENU_KEY = `HKCU\\Software\\Classes\\Directory\\shell\\${MENU_KEY_NAME}`;
 const DRIVE_MENU_KEY = `HKCU\\Software\\Classes\\Drive\\shell\\${MENU_KEY_NAME}`;
 const MENU_LABELS: Record<Locale, string> = {
-  "zh-CN": "在ZCode中打开",
-  "en-US": "Open in ZCode",
+  "zh-CN": "在DCode中打开",
+  "en-US": "Open in DCode",
 };
 
 type Logger = {
@@ -83,7 +83,8 @@ export async function installWindowsOpenFolderContextMenu(options: {
   locale: Locale;
   logger: Logger;
 }): Promise<void> {
-  if (options.platform !== "win32") {
+  // 工作区开发和免安装包不能在启动时覆盖用户现有的 ZCode 系统菜单。
+  if (options.platform !== "win32" || process.env.DCODE_ENABLE_EXPLORER_MENU !== "1") {
     return;
   }
 

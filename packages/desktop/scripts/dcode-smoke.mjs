@@ -16,6 +16,13 @@ for (const args of [['init'], ['add', '.'], ['-c', 'user.name=DCode Test', '-c',
   if (result.status !== 0 && !result.stdout.includes('nothing to commit')) throw new Error(result.stderr);
 }
 const errors = [];
+function explorerMenus() {
+  return ['Directory', 'Drive'].flatMap(kind => ['ZCode.OpenInZCode', 'DCode.OpenInDCode'].map(name => {
+    const result = spawnSync('reg.exe', ['query', `HKCU\\Software\\Classes\\${kind}\\shell\\${name}`, '/s'], { encoding: 'utf8', windowsHide: true });
+    return { status: result.status, output: result.stdout };
+  }));
+}
+const originalMenus = explorerMenus();
 async function capture(page, name) {
   const client = await page.context().newCDPSession(page);
   try {
@@ -58,7 +65,16 @@ try {
   await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
   console.log('[smoke] Test workspace opened');
   await chat.getByRole('status').filter({ hasText: 'Connected' }).waitFor({ timeout: 180000 });
-  await chat.getByLabel('Model', { exact: true }).selectOption('dcode-fixture/dcode-fixture');
+  await chat.getByText('Agent Runtime Settings', { exact: true }).click();
+  await chat.getByLabel('Provider ID', { exact: true }).fill('desktop-ui-fixture');
+  await chat.getByLabel('Base URL', { exact: true }).fill(`http://127.0.0.1:${server.address().port}/v1`);
+  await chat.getByLabel('Model ID', { exact: true }).fill('dcode-fixture');
+  await chat.getByLabel('API Key', { exact: true }).fill('synthetic-local-test-key');
+  await chat.getByRole('button', { name: 'Save to DSH', exact: true }).click();
+  await chat.getByText('Saved to DeepSeek Harness.', { exact: true }).waitFor({ timeout: 30000 });
+  assert.equal(await chat.getByLabel('API Key', { exact: true }).inputValue(), '');
+  await chat.getByText('Agent Runtime Settings', { exact: true }).click();
+  await chat.getByLabel('Model', { exact: true }).selectOption('desktop-ui-fixture/dcode-fixture');
   await chat.getByLabel('Message', { exact: true }).fill('Read input.txt, write and edit output.txt, then execute the verification command.');
   await capture(page, '01-ready.png');
   await writeFile(join(data, 'interaction.json'), JSON.stringify(await page.evaluate(() => {
@@ -78,6 +94,7 @@ try {
   }
   assert.ok((await chat.innerText()).includes('DCODE_SHELL_OK'));
   assert.ok((await chat.innerText()).includes('DCode input'));
+  assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('<available_skills>'), 'internal skill catalogs must not render as user messages');
   assert.equal(await readFile(join(workspace, 'output.txt'), 'utf8'), 'edited version\n');
   await capture(page, '02-tools.png');
   const savedSession = await chat.getByLabel('Session History', { exact: true }).inputValue();
@@ -96,15 +113,43 @@ try {
   await chat.getByTestId('dcode-messages').getByText('Waiting 0.', { exact: false }).waitFor({ timeout: 30000 });
   await chat.getByRole('button', { name: 'Stop', exact: true }).click();
   await chat.getByRole('button', { name: 'Send', exact: true }).waitFor({ timeout: 30000 });
+  await chat.getByLabel('Message', { exact: true }).fill('Continue after the stopped response and confirm the result.');
+  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  const continuationDeadline = Date.now() + 30000;
+  while (await chat.getByTestId('dcode-messages').getByText('DCode streaming complete.', { exact: true }).count() < 2 || await chat.getByRole('button', { name: 'Stop', exact: true }).isVisible()) {
+    if (Date.now() > continuationDeadline) throw new Error('Could not continue conversation after Stop');
+    await page.waitForTimeout(100);
+  }
   console.log('[smoke] Session history, runtime restart and Stop verified');
   await chat.getByRole('button', { name: 'View Diff', exact: true }).click();
   await page.getByText('output.txt', { exact: true }).last().waitFor({ timeout: 30000 });
   await page.getByText('output.txt', { exact: true }).last().click();
   await page.waitForTimeout(2000);
   await capture(page, '03-diff.png');
+  await page.locator('[data-testid="terminal-toggle"]:visible').click();
+  const terminalInput = page.locator('.xterm-helper-textarea:visible').last();
+  await terminalInput.waitFor({ timeout: 30000 });
+  await terminalInput.focus();
+  const terminalMarker = `DCODE_TERMINAL_OK_${Date.now()}`;
+  await page.keyboard.type(`echo ${terminalMarker} > dcode-terminal-smoke.txt`);
+  await page.keyboard.press('Enter');
+  const terminalDeadline = Date.now() + 30000;
+  while (!(await readFile(join(workspace, 'dcode-terminal-smoke.txt'), 'utf8').catch(() => '')).replaceAll('\0', '').includes(terminalMarker)) {
+    if (Date.now() > terminalDeadline) throw new Error('Native workspace terminal did not execute the verification command');
+    await page.waitForTimeout(100);
+  }
+  await capture(page, '04-terminal.png');
+  const identity = await app.evaluate(({ app }) => ({ packaged: app.isPackaged, resourcesPath: process.resourcesPath }));
+  assert.deepEqual(explorerMenus(), originalMenus, 'Desktop startup must not modify Explorer registration');
+  if (process.env.DCODE_TEST_EXECUTABLE) {
+    assert.equal(identity.packaged, true);
+    const profile = JSON.parse(await readFile(join(data, 'dsh/profiles/dcode/package.json'), 'utf8'));
+    assert.ok(Object.values(profile.dependencies).every(value => value.includes('/resources/dsh-runtime/')));
+    assert.equal(spawnSync(join(identity.resourcesPath, 'dsh-runtime/node.exe'), ['--version'], { encoding: 'utf8', windowsHide: true }).stdout.trim(), 'v24.14.0');
+  }
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
-    toolOutputVisible: true, fileEdited: true, historyRestored: true, runtimeRestart: true, cancellation: true,
-    diffOpened: true, title: await page.title() }, null, 2));
+    toolOutputVisible: true, fileEdited: true, historyRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
+    explorerMenuUnchanged: true, providerSettingsUI: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
 } finally {
   if (app) {

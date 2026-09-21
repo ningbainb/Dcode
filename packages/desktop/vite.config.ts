@@ -186,7 +186,8 @@ export default defineConfig(({ mode }) => {
       },
       dedupe: ["react", "react-dom", "lucide-react"],
     },
-    server: { port: 5174, strictPort: true },
+    // 本机 IPv6 回环可能被禁用；明确绑定 IPv4，避免 Electron 一直等待开发服务。
+    server: { host: "127.0.0.1", port: 5174, strictPort: true },
     define: {
       __ZCODE_ENDPOINT_ENV__: JSON.stringify(pickProductEndpointEnv(env)),
       __ZCODE_VERSION__: JSON.stringify(buildMetadata.appVersion),
