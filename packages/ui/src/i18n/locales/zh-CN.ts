@@ -1,5 +1,7 @@
 /** 中文翻译 */
+import { cloudBackupZh } from "./cloudBackup.js";
 const zhCN: Record<string, string> = {
+  ...cloudBackupZh,
   "startPlan.recommendation.subagentDescription":
     "你的体验套餐中，{model} 仍有可用额度，是否将此子智能体的模型切换到体验套餐？",
   "startPlan.recommendation.preferenceSaveFailed": "未能保存“不再提示”，本次仍按你的选择继续。",

@@ -1,4 +1,5 @@
 import type { IDshService } from "./dsh/dsh.js";
+import type { ICloudBackupService } from "./cloud-backup/cloudBackup.js";
 import { IOffPeakTaskService } from "./session/offPeakTask.js";
 import type { IFileService } from "./file/file.js";
 import type { IMediaPreviewService } from "./media-preview/mediaPreview.js";
@@ -43,6 +44,7 @@ import type { IConversationShareService } from "./conversation-share/conversatio
 /** UI 层消费的统一服务接口 */
 export interface IServiceAccessor {
   readonly dshService?: IDshService;
+  readonly cloudBackupService?: ICloudBackupService;
   readonly fileService: IFileService;
   readonly mediaPreviewService?: IMediaPreviewService;
   readonly gitService: IGitService;

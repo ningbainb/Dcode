@@ -1,4 +1,5 @@
 import {
+  CloudUpload,
   Monitor,
   Moon,
   Settings,
@@ -55,6 +56,7 @@ const BASE_SETTINGS_SECTION_GROUPS: Array<{
 ];
 
 const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
+  { id: "cloudBackup", icon: CloudUpload, titleId: "settings.cloudBackup.title", groupId: "dataAndStats" },
   {
     id: "general",
     icon: Settings2,
@@ -161,7 +163,7 @@ const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
 // 兼容既有只读消费者：默认配置代表不带桌面平台能力的 Web 视图；
 // macOS/Windows/Linux 必须继续通过 createSettingsPageConfig 动态加入 Computer Use。
 export const SETTINGS_SECTIONS = BASE_SETTINGS_SECTIONS.filter(
-  (section) => section.id !== "computerUse" && isSettingsSectionEnabled(section.id),
+  (section) => section.id !== "computerUse" && section.id !== "cloudBackup" && isSettingsSectionEnabled(section.id),
 );
 
 interface SettingsPageConfigOptions {
@@ -177,6 +179,7 @@ export function createSettingsPageConfig({
 }: SettingsPageConfigOptions = {}) {
   const showComputerUse = isDesktop || isMacDesktop || isWindowsDesktop;
   const settingsSections = BASE_SETTINGS_SECTIONS.filter((section) => {
+    if (section.id === "cloudBackup" && !isWindowsDesktop) return false;
     if (section.id === "computerUse" && !showComputerUse) return false;
     return isSettingsSectionEnabled(section.id);
   });

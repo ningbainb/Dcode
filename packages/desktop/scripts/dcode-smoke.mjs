@@ -139,6 +139,11 @@ try {
     await page.waitForTimeout(100);
   }
   await capture(page, '04-terminal.png');
+  await page.keyboard.press('Control+,');
+  await page.getByRole('button', { name: /^(Cloud backup|云备份)$/ }).click();
+  await page.getByRole('button', { name: /^(Sign in with browser|浏览器登录)$/ }).waitFor();
+  assert.equal(await page.getByRole('switch').isChecked(), false);
+  await capture(page, '05-cloud-backup-settings.png');
   const identity = await app.evaluate(({ app }) => ({ packaged: app.isPackaged, resourcesPath: process.resourcesPath }));
   assert.deepEqual(explorerMenus(), originalMenus, 'Desktop startup must not modify Explorer registration');
   if (process.env.DCODE_TEST_EXECUTABLE) {
@@ -149,7 +154,7 @@ try {
   }
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
     toolOutputVisible: true, fileEdited: true, historyRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
-    explorerMenuUnchanged: true, providerSettingsUI: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
+    explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
 } finally {
   if (app) {

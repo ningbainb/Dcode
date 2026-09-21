@@ -8,6 +8,8 @@
     "dev": "pnpm dev:desktop",
     "build:desktop": "pnpm --filter @zcode/desktop build:no-runtime-assets",
     "test:dcode": "node --test packages/ui/src/dsh/*.test.mjs packages/dsh-runtime/test/*.test.mjs",
+    "test:cloud-backup": "node scripts/test-cloud-backup.mjs",
+    "test:cloud-backup:ui": "node packages/desktop/scripts/cloud-backup-ui-smoke.mjs",
     "pack:dcode": "pnpm --filter @zcode/desktop pack:dcode",
     "prepare:dcode-runtime": "node packages/desktop/scripts/prepare-dcode-runtime.mjs",
     "build:dcode": "node scripts/build-desktop-agent-cli.mjs && pnpm build:bootstrap && pnpm --filter @zcode/desktop prepare:native-search",

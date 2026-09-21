@@ -1,0 +1,103 @@
+const messages = {
+  readCloud: ["读取云端快照（不启用上传）", "Read cloud snapshots (no upload)"],
+  title: ["云备份", "Cloud backup"],
+  edit: ["调整设置", "Edit settings"],
+  saveAndBackup: ["保存并备份", "Save and back up"],
+  description: [
+    "把已保存的代码（包含未提交修改）备份到 GitHub 私有仓库，不改变项目的提交记录。",
+    "Back up saved code, including uncommitted changes, to a private GitHub repository without changing project commits.",
+  ],
+  loading: ["正在读取备份状态…", "Loading backup status…"],
+  unsupported: [
+    "此功能需要 Windows 桌面端，以及包含 Git Credential Manager 的 Git for Windows。",
+    "Requires the Windows desktop and Git for Windows with Git Credential Manager.",
+  ],
+  account: ["GitHub 账号", "GitHub account"],
+  accountHint: [
+    "在浏览器中授权，凭证在本机独立加密保存。",
+    "Authorize in your browser. Credentials are encrypted in isolated local storage.",
+  ],
+  login: ["浏览器登录", "Sign in with browser"],
+  disconnect: ["断开连接", "Disconnect"],
+  cancelLogin: ["取消登录", "Cancel sign-in"],
+  openProject: [
+    "打开一个本地 Git 项目后，可为它配置云备份。",
+    "Open a local Git project to configure its backup.",
+  ],
+  automatic: ["自动云备份", "Automatic cloud backup"],
+  pauseHint: [
+    "关闭后停止新备份，已有快照保留。正在执行的操作完成后生效。",
+    "Turning off stops new backups and keeps snapshots. Takes effect after the current operation.",
+  ],
+  firstHint: [
+    "首次开启请在下方选择仓库并确认文件清单。",
+    "Choose a destination and review files below before enabling.",
+  ],
+  project: ["当前项目", "Current project"],
+  enabled: ["已开启", "Enabled"],
+  disabled: ["已关闭", "Off"],
+  destination: ["备份位置", "Destination"],
+  cloudTime: ["最近云端备份", "Last cloud backup"],
+  localTime: ["最近本地快照", "Last local snapshot"],
+  never: ["尚无记录", "Not yet"],
+  backupNow: ["立即备份", "Back up now"],
+  pending: ["个待上传", "pending upload"],
+  setup: ["配置当前项目", "Set up this project"],
+  privateHint: [
+    "仅使用你拥有的私有 DCode 备份仓库。",
+    "Uses private DCode backup repositories owned by you.",
+  ],
+  newRepo: ["新建私有仓库", "New private repository"],
+  existingRepo: ["已有备份仓库", "Existing backup repository"],
+  repoName: ["仓库名称", "Repository name"],
+  loadRepos: ["读取备份仓库", "Load backup repositories"],
+  frequency: ["备份频率", "Frequency"],
+  frequencyHint: [
+    "应用运行时检查，仅在文件变化后生成快照。",
+    "Checks while the app is running; unchanged files do not create snapshots.",
+  ],
+  minutes: ["分钟", "minutes"],
+  excludes: ["额外排除规则", "Additional exclusions"],
+  excludesHint: [
+    "每行一条 Gitignore 规则。默认排除密钥、环境配置、依赖、缓存、构建产物和工作流。",
+    "One Gitignore rule per line. Keys, environment files, dependencies, caches, builds and workflows are excluded by default.",
+  ],
+  preview: ["预览备份内容", "Preview backup"],
+  private: ["私有", "Private"],
+  files: ["个文件", "files"],
+  excluded: ["已排除", "Excluded"],
+  savedOnly: [
+    "只包含已保存到磁盘的内容；不会上传原项目的历史提交。",
+    "Includes saved disk contents only; original commit history is not uploaded.",
+  ],
+  fileList: ["查看文件清单", "View file list"],
+  empty: ["暂无", "None yet"],
+  blocked: [
+    "这些文件需要排除或处理后才能备份：",
+    "Exclude or resolve these files before backing up:",
+  ],
+  confirm: ["开启并首次备份", "Enable and back up"],
+  snapshots: ["最近快照", "Recent snapshots"],
+  uploaded: ["云端已确认", "Confirmed in cloud"],
+  localOnly: ["仅本地，尚未上传", "Local only, not uploaded"],
+  restore: ["恢复副本", "Restore copy"],
+  restoreHint: [
+    "显示最近 50 个快照。选择父文件夹后恢复到新目录，不覆盖当前项目。",
+    "Shows the latest 50 snapshots. Restore creates a new directory in your chosen parent folder.",
+  ],
+  snapshotDiff: ["快照变更", "Snapshot changes"],
+  close: ["关闭", "Close"],
+  restored: ["已恢复至：", "Restored to:"],
+  browserWaiting: ["请在浏览器完成 GitHub 授权…", "Complete GitHub authorization in your browser…"],
+  working: ["正在处理…", "Working…"],
+  scope: [
+    "首版备份当前文件状态，不包含完整分支历史、LFS 内容或子模块。退出应用后停止自动备份。",
+    "Backs up current file state, not full branch history, LFS contents or submodules. Automatic backup stops when the app exits.",
+  ],
+};
+export const cloudBackupZh = Object.fromEntries(
+  Object.entries(messages).map(([key, values]) => [`settings.cloudBackup.${key}`, values[0]!]),
+);
+export const cloudBackupEn = Object.fromEntries(
+  Object.entries(messages).map(([key, values]) => [`settings.cloudBackup.${key}`, values[1]!]),
+);

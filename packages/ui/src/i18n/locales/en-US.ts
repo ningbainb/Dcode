@@ -1,5 +1,7 @@
 /** English translations */
+import { cloudBackupEn } from "./cloudBackup.js";
 const enUS: Record<string, string> = {
+  ...cloudBackupEn,
   "startPlan.recommendation.subagentDescription":
     "Your Start Plan has quota available for {model}. Switch this subagent’s model to the Start Plan?",
   "startPlan.recommendation.preferenceSaveFailed":

@@ -2,6 +2,7 @@
 import { logger } from "@/logger.js";
 
 export type SettingsSectionId =
+  | "cloudBackup"
   | "general"
   | "appearance"
   | "migration"
@@ -60,6 +61,7 @@ export interface SettingsModelProviderTarget {
 
 function isSettingsSectionId(value: string): value is SettingsSectionId {
   return (
+    value === "cloudBackup" ||
     value === "general" ||
     value === "appearance" ||
     value === "migration" ||

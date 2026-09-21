@@ -1,5 +1,6 @@
 import { ProxyChannel, type IChannelClient } from "@zcode/rpc";
 import { IDshService } from "@zcode/services";
+import { ICloudBackupService } from "@zcode/services";
 import {
   IFileService,
   IMediaPreviewService,
@@ -50,6 +51,7 @@ import {
  */
 export class RemoteServiceAccess implements IServiceAccessor {
   readonly dshService: IDshService;
+  readonly cloudBackupService: ICloudBackupService;
   readonly fileService: IFileService;
   readonly mediaPreviewService: IMediaPreviewService;
   readonly gitService: IGitService;
@@ -94,6 +96,7 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly promptAttachmentTransferService: IPromptAttachmentTransferService;
 
   constructor(channelClient: IChannelClient) {
+    this.cloudBackupService = ProxyChannel.toService<ICloudBackupService>(channelClient.getChannel(ICloudBackupService.channelName));
     this.dshService = ProxyChannel.toService<IDshService>(channelClient.getChannel(IDshService.channelName));
     this.fileService = ProxyChannel.toService<IFileService>(
       channelClient.getChannel(IFileService.channelName),
