@@ -297,6 +297,8 @@ import { IZCodeTaskService } from "./session/zcodeTaskService.js";
 import { IZCodeAgentService } from "./zcode-agent/zcodeAgent.js";
 import type { CuaOperationStateReporter } from "./zcode-agent/cuaOperationTurnTracker.js";
 import { IZCodeSessionService } from "./zcode-session/zcodeSession.js";
+import { IDshService } from "./dsh/dsh.js";
+import { createDshService } from "./dsh/dshService.js";
 import {
   createUnsupportedConversationShareService,
   IConversationShareService,
@@ -2433,6 +2435,7 @@ export function createLocalServices(options: {
     .register(IZCodeTaskService, zcodeTaskService)
     .register(IZCodeAgentService, zcodeAgentService)
     .register(IZCodeSessionService, zcodeSessionService)
+    .register(IDshService, createDshService(options.serviceAuthorityMode === "desktop-local"))
     .register(ICuaPermissionService, cuaPermissionService)
     .register(ICuaPipSessionService, cuaPipSessionService)
     .register(IConversationShareService, conversationShareService)
@@ -2709,6 +2712,7 @@ function readTelemetryOAuthUserId(rawUserInfo: string | null): string {
 }
 
 export function disposeServiceResources(services: ServiceCollection): void {
+  void services.getOptional(IDshService)?.stop().catch(() => {});
   // host process 退出前以前没有统一遍历本地服务做资源回收，
   // terminal/task wrapper 这类会拉起子进程的服务只能等宿主进程自己结束，时序上可能留下短暂残留。
   // 这里集中调用各服务的本地 disposeAll 钩子，把“退出 app = 回收所有托管资源”落成机械动作。
@@ -2743,6 +2747,7 @@ export function disposeServiceResources(services: ServiceCollection): void {
 }
 
 export async function disposeServiceResourcesAndWait(services: ServiceCollection): Promise<void> {
+  await services.getOptional(IDshService)?.stop();
   // app 关闭时 host 需要等 agent 进程树完成 graceful + force 清理。
   // 旧的同步 dispose 会在 host 退出时丢掉强杀 timer，导致 zcode-cli/app-server 变成孤儿进程。
   const disposableServices = [

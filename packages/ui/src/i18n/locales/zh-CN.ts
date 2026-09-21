@@ -1118,7 +1118,7 @@ const zhCN: Record<string, string> = {
   "titleBar.menu.view.actualSize": "实际大小",
   "titleBar.menu.view.zoomIn": "放大",
   "titleBar.menu.view.zoomOut": "缩小",
-  "titleBar.menu.help.about": "关于 ZCode",
+  "titleBar.menu.help.about": "关于 DCode",
   "titleBar.menu.help.checkForUpdates": "检查更新",
   "titleBar.menu.help.feedback": "问题上报",
   "sidebar.menu.community": "用户社群",

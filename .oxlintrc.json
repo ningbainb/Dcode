@@ -7,6 +7,11 @@
   },
   "overrides": [
     {
+      // Preserve the audited upstream DSH lifecycle files without mechanical splitting.
+      "files": ["packages/dsh-runtime/vendor/**"],
+      "rules": { "max-lines": "off" }
+    },
+    {
       // 测试文件天然会堆叠大量场景与断言，继续复用生产代码的行数上限会造成误报，
       // 因此只对 test/spec 文件关闭 max-lines，避免放宽业务代码约束。
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],

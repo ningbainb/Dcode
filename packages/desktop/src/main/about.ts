@@ -52,7 +52,7 @@ interface AboutSnapshotOptions {
   };
 }
 
-const ABOUT_APPLICATION_NAME = "ZCode Desktop App";
+const ABOUT_APPLICATION_NAME = "DCode Desktop App";
 // 自定义 About 内容本体是 256x280；原生窗口如果同尺寸会让内容贴满透明窗口边界。
 // 这里给 BrowserWindow 额外留出背景呼吸空间，避免正式 About 看起来比 demo 更局促。
 const ABOUT_WINDOW_WIDTH = 256;
@@ -68,14 +68,14 @@ const ABOUT_MESSAGES: Record<
   }
 > = {
   "zh-CN": {
-    aboutTitle: "关于 ZCode",
+    aboutTitle: "关于 DCode",
     versionLabel: "版本",
     okButtonLabel: "确定",
     optimizedForAppleSilicon: "已针对 Apple Silicon 优化。",
     copyright: (year) => `版权所有 © ${year} ZCode。`,
   },
   "en-US": {
-    aboutTitle: "About ZCode",
+    aboutTitle: "About DCode",
     versionLabel: "version",
     okButtonLabel: "OK",
     optimizedForAppleSilicon: "Optimized for Apple Silicon.",

@@ -114,6 +114,7 @@ function createSharedDefines() {
 }
 
 const desktopNodeRuntimeExternals = [
+  "@dcode/dsh-runtime",
   "electron",
   "node-pty",
   "ssh2",

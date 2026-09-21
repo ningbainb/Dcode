@@ -1205,7 +1205,7 @@ const enUS: Record<string, string> = {
   "titleBar.menu.view.actualSize": "Actual size",
   "titleBar.menu.view.zoomIn": "Zoom in",
   "titleBar.menu.view.zoomOut": "Zoom out",
-  "titleBar.menu.help.about": "About ZCode",
+  "titleBar.menu.help.about": "About DCode",
   "titleBar.menu.help.checkForUpdates": "Check for updates",
   "titleBar.menu.help.feedback": "Feedback",
   "sidebar.menu.community": "Community",

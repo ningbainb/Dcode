@@ -1,11 +1,12 @@
 {
   "name": "@zcode/desktop",
   "private": true,
-  "description": "ZCode Desktop App",
+  "description": "DCode AI Coding Workspace powered by DeepSeek Harness",
   "author": "ZCode",
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
+    "pack:dcode": "node scripts/prepare-dcode-runtime.mjs && electron-builder --config electron-builder.dcode.mjs --win --x64 --publish never",
     "pre-dev": "node scripts/ensure-local-runtime-assets.mjs && node -e \"require('node:fs').rmSync('./out',{recursive:true,force:true})\"",
     "dev": "node ../../scripts/dev-desktop-env.mjs production",
     "pre-dev:local-cli": "pnpm --dir ../.. exec node scripts/build-desktop-agent-cli.mjs && node -e \"require('node:fs').rmSync('./out',{recursive:true,force:true})\"",
@@ -27,6 +28,7 @@
     "lint:fix": "oxlint --fix"
   },
   "dependencies": {
+    "@dcode/dsh-runtime": "workspace:*",
     "@arms/rum-electron": "^0.0.3",
     "@babel/runtime": "^7.24.5",
     "@fiahfy/icns": "^0.0.7",
@@ -82,5 +84,5 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.2"
   },
-  "productName": "ZCode"
+  "productName": "DCode"
 }

@@ -17,6 +17,7 @@
     "lint:fix": "oxlint --fix"
   },
   "dependencies": {
+    "@dcode/dsh-runtime": "workspace:*",
     "@zcode/provider": "workspace:*",
     "@zcode/provider-node": "workspace:*",
     "@zcode/rpc": "workspace:*",

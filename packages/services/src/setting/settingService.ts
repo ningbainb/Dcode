@@ -28,7 +28,7 @@ import {
   type LegacyTeamConnection,
 } from "#src/setting/legacyAccountConnectionSettings.js";
 const MAX_RECENT_PROJECTS = 10;
-const DEFAULT_PROJECT_NAME = "ZCodeProject";
+const DEFAULT_PROJECT_NAME = "DCodeProject";
 const SETTINGS_PARSE_RETRY_DELAY_MS = 300;
 const SETTINGS_PARSE_RETRY_COUNT = 3;
 
@@ -53,7 +53,7 @@ function resolveUserHomeDir() {
 }
 
 function getSettingsDir() {
-  return join(resolveUserHomeDir(), ".zcode", "v2");
+  return join(resolveUserHomeDir(), ".dcode", "v2");
 }
 
 function getSettingsFile() {

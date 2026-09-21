@@ -171,25 +171,7 @@ export function createCustomAboutDialogHtml(input: CustomAboutDialogHtmlInput): 
       <section class="about-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
         <div class="content">
           <div class="app-icon" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="118"
-              height="100"
-              fill="none"
-              viewBox="0 0 256 218"
-              class="app-logo"
-              focusable="false"
-            >
-              <path
-                fill="currentColor"
-                d="M134.4 0.130152L116.48 25.6022C113.665 29.5699 109.054 32.0019 104.064 32.0019H6.3999V0C6.3999 0.130149 134.4 0.130152 134.4 0.130152Z"
-              />
-              <path fill="currentColor" d="M256 0.130127L102.401 217.732H0L153.599 0.130127H256Z" />
-              <path
-                fill="currentColor"
-                d="M121.601 217.732L139.65 192.134C142.465 188.166 147.076 185.734 152.067 185.734H249.604V217.736H121.601V217.732Z"
-              />
-            </svg>
+            <svg class="app-logo" width="100" height="100" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2563eb"/><path d="M17 15h13c13 0 21 6 21 17s-8 17-21 17H17V15zm9 8v18h4c8 0 12-3 12-9s-4-9-12-9h-4z" fill="#fff"/><path d="m9 27-5 5 5 5m46-10 5 5-5 5" stroke="#93c5fd" stroke-width="3" fill="none"/></svg>
           </div>
           <h1 id="about-title" class="title">
             ${escapeHtml(input.applicationName)}<br />

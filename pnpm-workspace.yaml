@@ -17,6 +17,7 @@ supportedArchitectures:
     - current
     - glibc
 allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
   cpu-features: true
   edgedriver: true
   electron: true

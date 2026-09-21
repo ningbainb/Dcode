@@ -13,6 +13,7 @@ import { TID_APP_HEADER } from "@zcode/shared";
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
 import { V4ChatPane } from "@/v4/V4ChatPane.js";
 import { V4WorkspaceChatArea } from "@/v4/V4WorkspaceChatArea.js";
+import { DshChatPanel } from "@/dsh/DshChatPanel.js";
 import {
   V4SplitPaneEntryProvider,
   type V4SplitPaneSessionTarget,
@@ -822,6 +823,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
   const primaryNavigationBack =
     workspaceMainView === "plugin-store" ? handleManageInstalledPlugins : handleTaskNavBack;
   const canPrimaryNavigationBack = workspaceMainView === "plugin-store" || canTaskNavBack;
+  const [dshDraftRequest, setDshDraftRequest] = useState(0);
   const handleCreateTaskInChat = useCallback(
     (request?: Parameters<typeof onCreateTask>[0]) => {
       // workspaceReadOnlyReason 判定的是活动 workspace；当 request 显式带 targetWorkspace 时
@@ -833,9 +835,14 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
         return;
       }
       showChatMainView();
+      if (isDesktop) {
+        // 桌面新对话交给 DSH，避免同时建立旧 ZCode 会话。
+        setDshDraftRequest(value => value + 1);
+        return;
+      }
       onCreateTask(request);
     },
-    [onCreateTask, showChatMainView, workspaceReadOnlyReason],
+    [isDesktop, onCreateTask, showChatMainView, workspaceReadOnlyReason],
   );
   const shellWorkbenchBinding = useMemo<WorkbenchSessionBinding | null>(
     () =>
@@ -1509,7 +1516,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
 
   return (
     <DesktopWindowFrame
-      title={`ZCode / ${getPathLeaf(workspaceAbsPath)}`}
+      title={`DCode / ${getPathLeaf(workspaceAbsPath)}`}
       showHeader
       isDesktop={isDesktop}
       isMacDesktop={isMacDesktop}
@@ -1567,7 +1574,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                     onOpenBrowserUrl={handleOpenBrowserUrl}
                     fileTreeOpenRequest={fileTreeOpenRequest}
                     onCreateTask={handleCreateTaskInChat}
-                    onCreateConversationTask={onCreateConversationTask ?? handleCreateTaskInChat}
+                    onCreateConversationTask={isDesktop ? handleCreateTaskInChat : onCreateConversationTask ?? handleCreateTaskInChat}
                     onOpenFolderFromWorkspaceMenu={onOpenFolderFromWorkspaceMenu}
                     onOpenRemoteWorkspace={onOpenRemoteWorkspace}
                     theme={theme}
@@ -1836,12 +1843,12 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                                   永远停在 draft。v4 语义下 sessionId ≡ taskId，meta 只服务 Header 显示。
                                   桌面主区升级为分屏宿主（Layout/Focus 两层）；primary pane
                                   绑定语义与 testid 契约（paneId=workspace-main）不变。 */}
-                            <V4WorkspaceChatArea
+                            {isDesktop ? <DshChatPanel draftRequest={dshDraftRequest} workspacePath={workspaceAbsPath} onRefreshGit={handleRefreshGit} onOpenDiff={() => handleOpenGitReview()} /> : <V4WorkspaceChatArea
                               readOnly={Boolean(workspaceReadOnlyReason)}
                               foregroundEnabled={isWorkspaceVisible}
                               workspacePath={workspaceAbsPath}
                               workspaceIdentity={workspaceIdentity}
-                              isDesktop={isDesktop === true}
+                              isDesktop={false}
                               remoteSessionId={workspaceRemoteSessionId}
                               sessionId={activeTaskId}
                               activeSelectionSideChatSessionId={activeSelectionSideChatSessionId}
@@ -1892,7 +1899,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                               }
                               searchResultHighlightRequest={activeSearchResultHighlightRequest}
                               onSearchResultHighlightDone={onSearchResultHighlightDone}
-                            />
+                            />}
                           </ScopedErrorBoundary>
                         </main>
                       )}

@@ -1,3 +1,5 @@
+export { IDshService } from "./dsh/dsh.js";
+export type { DshRuntimeHealth, DshModel, DshSession, DshEvent, DshProviderConfig } from "./dsh/dsh.js";
 // Descriptors & collection (browser-safe)
 export { type ServiceDescriptor, createServiceDescriptor } from "./descriptors.js";
 export { ServiceCollection } from "./collection.js";

@@ -42,7 +42,7 @@ import { logger } from "@/logger.js";
 import { RootShell } from "@/root/RootShell.js";
 import { RootWorkspaceContent } from "@/root/RootWorkspaceContent.js";
 import { resolveRootWorkspaceShellTarget } from "@/root/rootWorkspaceShellTarget.js";
-import { OccupationOnboarding } from "@/onboarding/OccupationOnboarding.js";
+import { DcodeOnboarding } from "@/dsh/DcodeOnboarding.js";
 import { OnboardingDialog } from "@/onboarding/OnboardingDialog.js";
 import { useRemoteWorkspaceHistory } from "@/root/useRemoteWorkspaceHistory.js";
 import { useRemoteWorkspaceTabLifecycle } from "@/root/useRemoteWorkspaceTabLifecycle.js";
@@ -410,7 +410,7 @@ function RootInner({
       rootProviderAvailability.hydrated || rootModelSelectionRead.state.status === "error",
   });
   const providerAvailabilityLoginEntryGuardEnabled =
-    shouldEnableProviderAvailabilityLoginEntryGuard();
+    !services.dshService && shouldEnableProviderAvailabilityLoginEntryGuard();
   const { startupCheckCompleted: providerAvailabilityStartupCheckCompleted } =
     useProviderAvailabilityLoginEntryGuard({
       enabled: providerAvailabilityLoginEntryGuardEnabled,
@@ -991,7 +991,7 @@ function RootInner({
       {rootModelSelectionErrorNode}
       {remoteConnectionDialog}
       {directoryBrowserDialog}
-      <OccupationOnboarding
+      <DcodeOnboarding
         showWindowControls={Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop))}
         showChildrenWhileLoading={!workspaceShellPath && isSettingsTabActive}
         isMacDesktop={isMacDesktop}
@@ -1056,13 +1056,13 @@ function RootInner({
           resetKeys={[workspaceShellIdentity?.trim() || workspaceShellPath]}
           variant="silent"
         >
-          <OnboardingDialog
+          {!services.dshService && <OnboardingDialog
             workspacePath={workspaceShellPath || undefined}
             workspaceIdentity={workspaceShellIdentity}
             isDesktop={isDesktop}
-          />
+          />}
         </ScopedErrorBoundary>
-      </OccupationOnboarding>
+      </DcodeOnboarding>
     </RootShell>
   );
 }

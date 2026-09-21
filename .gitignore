@@ -69,3 +69,6 @@ packages/desktop/.e2e-artifacts/
 packages/desktop/.e2e-cache/
 packages/desktop/.e2e-network-capture/
 .zcode-runtime/
+# DCode generated standalone runtime
+packages/desktop/dcode-runtime/
+packages/desktop/dcode-runtime-v1/
