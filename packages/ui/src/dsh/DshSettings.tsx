@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- DSH provider settings keeps its navigation, catalog and editor together so draft state has one owner. */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Plus, Search, Trash2 } from "lucide-react";
 import type {
   DshProviderDraft,
   DshProviderSettings,
@@ -99,6 +99,13 @@ const COPY = {
     remove: "删除供应商",
     choose: "从左侧选择供应商，或添加新供应商。",
     templateHint: "选择一个模板后填写模型 ID；预填地址和协议都可以修改。",
+    search: "搜索供应商",
+    noMatches: "没有匹配的供应商",
+    apiProviders: "API 供应商",
+    modelCount: (count: number) => `${count} 个模型`,
+    moveUp: "上移模型",
+    moveDown: "下移模型",
+    nativeModels: "DSH 内置模型由运行时管理，不能在这里编辑。",
     nativeHint: "DeepSeek 是 DSH 内置供应商，模型由 DSH 管理；这里只需设置或更新 API Key。",
     saved: "已保存到 DSH，聊天模型列表已刷新。",
     deleted: "供应商已删除。",
@@ -140,6 +147,13 @@ const COPY = {
     remove: "Delete provider",
     choose: "Select a provider on the left or add a new one.",
     templateHint: "Choose a template, then enter a model ID. Endpoints and protocols are editable.",
+    search: "Search providers",
+    noMatches: "No matching providers",
+    apiProviders: "API providers",
+    modelCount: (count: number) => `${count} model${count === 1 ? "" : "s"}`,
+    moveUp: "Move model up",
+    moveDown: "Move model down",
+    nativeModels: "Built-in DSH models are managed by the runtime and cannot be edited here.",
     nativeHint:
       "DeepSeek is built into DSH; DSH manages its models. Set or update its API key here.",
     saved: "Saved to DSH. Chat models have been refreshed.",
@@ -195,8 +209,12 @@ export function DshSettings() {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [keyVisible, setKeyVisible] = useState(false);
+  const [catalogQuery, setCatalogQuery] = useState("");
   const refreshSerial = useRef(0);
   const selected = view?.providers.find((provider) => provider.id === selectedId) ?? null;
+  const visibleTemplates = TEMPLATES.filter((template) =>
+    `${template.name} ${template.id}`.toLowerCase().includes(catalogQuery.trim().toLowerCase()),
+  );
 
   const refresh = useCallback(
     async (selectId?: string) => {
@@ -317,6 +335,18 @@ export function DshSettings() {
     );
   };
 
+  const moveModel = (index: number, direction: -1 | 1) => {
+    setDraft((current) => {
+      if (!current || index + direction < 0 || index + direction >= current.models.length)
+        return current;
+      const models = [...current.models];
+      const [model] = models.splice(index, 1);
+      if (!model) return current;
+      models.splice(index + direction, 0, model);
+      return { ...current, models };
+    });
+  };
+
   return (
     <section className="space-y-4" data-testid="dsh-model-settings">
       <div className="flex items-start justify-between gap-3">
@@ -325,6 +355,7 @@ export function DshSettings() {
           onRefresh={() => void refresh()}
           onNew={() => {
             setMode("catalog");
+            setCatalogQuery("");
             setNotice("");
           }}
           refreshing={loading}
@@ -365,8 +396,11 @@ export function DshSettings() {
                   className="size-4"
                 />
                 <span className="min-w-0 flex-1 truncate max-md:sr-only">{provider.name}</span>
+                <span className="shrink-0 text-ui-xs text-foreground-subtlest max-md:hidden">
+                  {provider.models.length}
+                </span>
                 <span
-                  className={`size-1.5 rounded-full max-md:hidden ${provider.hasApiKey ? "bg-success" : "bg-foreground-subtlest"}`}
+                  className={`size-1.5 shrink-0 rounded-full max-md:hidden ${provider.hasApiKey ? "bg-success" : "bg-foreground-subtlest"}`}
                 />
               </button>
             ))}
@@ -384,8 +418,21 @@ export function DshSettings() {
                   <h2 className="text-ui-lg font-semibold">{t.add}</h2>
                   <p className="mt-1 text-ui-base text-foreground-subtle">{t.templateHint}</p>
                 </div>
+                <div className="relative max-w-sm">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground-subtlest" />
+                  <Input
+                    aria-label={t.search}
+                    value={catalogQuery}
+                    onChange={(event) => setCatalogQuery(event.target.value)}
+                    placeholder={t.search}
+                    className="pl-9"
+                  />
+                </div>
+                <h3 className="text-ui-caption font-semibold text-foreground-subtle">
+                  {t.apiProviders}
+                </h3>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {TEMPLATES.map((template) => (
+                  {visibleTemplates.map((template) => (
                     <button
                       key={template.id}
                       type="button"
@@ -402,6 +449,11 @@ export function DshSettings() {
                       <ChevronRight className="size-4 text-foreground-subtlest" />
                     </button>
                   ))}
+                  {visibleTemplates.length === 0 && (
+                    <p className="col-span-full text-ui-base text-foreground-subtle">
+                      {t.noMatches}
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => startNew()}
@@ -432,6 +484,7 @@ export function DshSettings() {
                         : selected?.hasApiKey
                           ? t.configured
                           : t.keyMissing}
+                      {selected && ` · ${t.modelCount(selected.models.length)}`}
                     </p>
                   </div>
                   {selected && !selected.builtIn && (
@@ -508,10 +561,27 @@ export function DshSettings() {
                     {selected?.builtIn ? t.nativeHint : selected ? t.keyHint : t.newKeyHint}
                   </p>
                 </Field>
+                {selected?.builtIn && (
+                  <section className="space-y-2" aria-label={t.model}>
+                    <h3 className="text-ui-base font-semibold">{t.model}</h3>
+                    <p className="text-ui-caption text-foreground-subtle">{t.nativeModels}</p>
+                    {selected.models.map((model) => (
+                      <div
+                        key={model.id}
+                        className="rounded-lg border border-border bg-surface px-3 py-2"
+                      >
+                        <p className="text-ui-base font-medium">{model.name}</p>
+                        <p className="text-ui-caption text-foreground-subtle">{model.id}</p>
+                      </div>
+                    ))}
+                  </section>
+                )}
                 {!selected?.builtIn && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-ui-base font-semibold">{t.model}</h3>
+                      <h3 className="text-ui-base font-semibold">
+                        {t.model} · {t.modelCount(draft.models.length)}
+                      </h3>
                       <Button
                         type="button"
                         variant="outline"
@@ -533,60 +603,86 @@ export function DshSettings() {
                     {draft.models.map((model, index) => (
                       <div
                         key={index}
-                        className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_7rem_7rem_auto]"
+                        className="space-y-3 rounded-lg border border-border bg-surface p-3"
                       >
-                        <Field label={t.modelId}>
-                          <Input
-                            size="lg"
-                            value={model.id}
-                            onChange={(event) => updateModel(index, { id: event.target.value })}
-                          />
-                        </Field>
-                        <Field label={t.modelName}>
-                          <Input
-                            size="lg"
-                            value={model.name}
-                            onChange={(event) => updateModel(index, { name: event.target.value })}
-                          />
-                        </Field>
-                        <Field label={t.context}>
-                          <Input
-                            size="lg"
-                            type="number"
-                            min={1024}
-                            value={model.contextWindow}
-                            onChange={(event) =>
-                              updateModel(index, { contextWindow: Number(event.target.value) })
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate text-ui-base font-medium">
+                            {model.name || model.id || `${t.model} ${index + 1}`}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`${t.moveUp} ${index + 1}`}
+                            disabled={index === 0}
+                            onClick={() => moveModel(index, -1)}
+                          >
+                            <ArrowUp className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`${t.moveDown} ${index + 1}`}
+                            disabled={index === draft.models.length - 1}
+                            onClick={() => moveModel(index, 1)}
+                          >
+                            <ArrowDown className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t.removeModel}
+                            disabled={draft.models.length === 1}
+                            onClick={() =>
+                              setDraft({
+                                ...draft,
+                                models: draft.models.filter((_, position) => position !== index),
+                              })
                             }
-                          />
-                        </Field>
-                        <Field label={t.output}>
-                          <Input
-                            size="lg"
-                            type="number"
-                            min={1}
-                            value={model.maxTokens}
-                            onChange={(event) =>
-                              updateModel(index, { maxTokens: Number(event.target.value) })
-                            }
-                          />
-                        </Field>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="self-end"
-                          aria-label={t.removeModel}
-                          disabled={draft.models.length === 1}
-                          onClick={() =>
-                            setDraft({
-                              ...draft,
-                              models: draft.models.filter((_, position) => position !== index),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <Field label={t.modelId}>
+                            <Input
+                              size="lg"
+                              value={model.id}
+                              onChange={(event) => updateModel(index, { id: event.target.value })}
+                            />
+                          </Field>
+                          <Field label={t.modelName}>
+                            <Input
+                              size="lg"
+                              value={model.name}
+                              onChange={(event) => updateModel(index, { name: event.target.value })}
+                            />
+                          </Field>
+                          <Field label={t.context}>
+                            <Input
+                              size="lg"
+                              type="number"
+                              min={1024}
+                              value={model.contextWindow}
+                              onChange={(event) =>
+                                updateModel(index, { contextWindow: Number(event.target.value) })
+                              }
+                            />
+                          </Field>
+                          <Field label={t.output}>
+                            <Input
+                              size="lg"
+                              type="number"
+                              min={1}
+                              value={model.maxTokens}
+                              onChange={(event) =>
+                                updateModel(index, { maxTokens: Number(event.target.value) })
+                              }
+                            />
+                          </Field>
+                        </div>
                       </div>
                     ))}
                   </div>

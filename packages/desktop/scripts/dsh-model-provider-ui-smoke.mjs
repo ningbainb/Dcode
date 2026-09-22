@@ -35,7 +35,7 @@ let providers=[{id:'deepseek-official',name:'DeepSeek',api:'native',baseURL:'',m
 const calls:string[]=[];(window as any).__providerCalls=calls;
 const dshService={
   listProviderSettings:async()=>({revision,writable:true,providers:structuredClone(providers)}),
-  saveProvider:async(draft:any,expected:number,creating:boolean)=>{if(expected!==revision)throw Error('stale');calls.push('save:'+draft.id+':'+draft.models.length+':'+creating);providers=[...providers.filter(p=>p.id!==draft.id),{...draft,hasApiKey:!!draft.apiKey,builtIn:false}];revision++},
+  saveProvider:async(draft:any,expected:number,creating:boolean)=>{if(expected!==revision)throw Error('stale');calls.push('save:'+draft.id+':'+draft.models.map((model:any)=>model.id).join(',')+':'+creating);providers=[...providers.filter(p=>p.id!==draft.id),{...draft,hasApiKey:!!draft.apiKey,builtIn:false}];revision++},
   deleteProvider:async(id:string,expected:number)=>{if(expected!==revision)throw Error('stale');calls.push('delete:'+id);providers=providers.filter(p=>p.id!==id);revision++},
   restart:async()=>({state:'ready',generation:2}),getLogsPath:async()=>'/tmp/dsh.log',
 };
@@ -92,13 +92,25 @@ try {
   }
   assert.equal(await page.getByTestId("dsh-provider-nav-item").count(), 1);
   assert.equal(await page.getByText("Z.ai", { exact: true }).count(), 0);
+  await page.getByText("deepseek-flash", { exact: true }).waitFor();
   await page.getByRole("button", { name: "添加供应商" }).click();
+  await page.getByRole("textbox", { name: "搜索供应商" }).fill("openai");
+  assert.equal(
+    await page
+      .getByTestId("dsh-provider-catalog")
+      .getByRole("button", { name: "Anthropic" })
+      .count(),
+    0,
+  );
   await page.getByTestId("dsh-provider-catalog").getByRole("button", { name: "OpenAI" }).click();
   await page.getByLabel("模型 ID").fill("first-model");
   await page.getByRole("button", { name: "添加模型" }).click();
   await page.getByLabel("模型 ID").nth(1).fill("second-model");
+  await page.getByRole("button", { name: "下移模型 1" }).click();
   await page.getByRole("button", { name: "保存到 DSH" }).click();
-  await page.waitForFunction(() => window.__providerCalls.includes("save:openai:2:true"));
+  await page.waitForFunction(() =>
+    window.__providerCalls.includes("save:openai:second-model,first-model:true"),
+  );
   await page.getByTestId("dsh-provider-nav-item").filter({ hasText: "OpenAI" }).waitFor();
   await page.screenshot({ path: join(output, "dsh-model-provider-settings.png"), fullPage: true });
   await page.evaluate(() => {
