@@ -41,6 +41,8 @@ pnpm dev:desktop
 
 `bootstrap` 会准备依赖及桌面运行资源，首次执行可能需要下载额外组件。在 Windows 上执行 `pnpm build:desktop` 后，可用 `pnpm pack:dcode` 生成 ZIP 打包产物；当前仓库暂未提供已签名的正式安装包。
 
+可在 [GitHub Releases 下载 v0.2.1 Windows x64 测试安装包](https://github.com/ningbainb/Dcode/releases/tag/v0.2.1)。这是未签名构建；安装及真实账号的在线链路尚待验收，使用前请阅读[发行说明与 SHA-256](docs/releases/v0.2.1.md)。
+
 ## 验证与贡献
 
 ```powershell

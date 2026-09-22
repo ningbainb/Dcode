@@ -19,7 +19,7 @@ export default {
   ...base,
   appId: 'com.dcode.desktop',
   productName: 'Dcode',
-  extraMetadata: { ...base.extraMetadata, name: 'dcode-desktop', author: { name: 'Dcode' }, homepage: null, version: '0.1.1', zcodeProductFlavor: 'production' },
+  extraMetadata: { ...base.extraMetadata, name: 'dcode-desktop', author: { name: 'Dcode' }, homepage: null, version: '0.2.1', zcodeProductFlavor: 'production' },
   directories: { ...base.directories, output: resolve(import.meta.dirname, '../../../../artifacts/v0.1') },
   // UI/services 已内联，不能再遍历其整棵依赖树并重复打入独立部署的 DSH。
   files: [...base.files, '!node_modules/**/*',

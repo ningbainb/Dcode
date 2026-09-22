@@ -33,6 +33,8 @@ pnpm dev:desktop
 
 For validation, run `pnpm typecheck`, `pnpm lint`, `pnpm test:dcode`, and `pnpm test:cloud-backup`. The DSH fixture test at `packages/dsh-runtime/test/agent-e2e.mjs` uses a synthetic local model, not a live provider account. On Windows, `pnpm build:desktop` followed by `pnpm pack:dcode` produces a ZIP package. This repository does not yet provide a signed installer release.
 
+The [v0.2.1 Windows x64 test installer](https://github.com/ningbainb/Dcode/releases/tag/v0.2.1) is unsigned. Installation and live model/GitHub account flows have not yet been verified. Read the [release notes and SHA-256](docs/releases/v0.2.1.md) before using it.
+
 ## License and credits
 
 First-party Dcode changes are licensed under [Apache-2.0](LICENSE). The repository retains ZCode's notices and [original README](docs/upstream/ZCode-README.md). Vendored DeepSeek Harness Desktop lifecycle files are BSD-3-Clause; see their [provenance](packages/dsh-runtime/vendor/PROVENANCE.md) and [license](packages/dsh-runtime/vendor/LICENSE). Other components retain their own terms; consult [NOTICE.DCode.md](NOTICE.DCode.md) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The Dcode icon and desktop icon assets are included in [docs/assets](docs/assets) and [public/logo/icons](public/logo/icons).
