@@ -42,14 +42,14 @@ function buildForceUpdatePromptMessages(locale: Locale) {
   if (locale === "zh-CN") {
     return {
       checkingTitle: "正在检查更新",
-      checkingMessage: "请保持此窗口打开，ZCode 正在查找可用更新。",
+      checkingMessage: "请保持此窗口打开，Dcode 正在查找可用更新。",
       downloadingTitle: "正在下载更新",
       downloadingVersionTitle: "正在下载更新 v{version}",
       downloadingMessage: "下载完成后会自动安装，请勿关闭应用。",
       readyTitle: "更新已下载",
-      readyMessage: "ZCode 正在准备重启并安装更新。",
+      readyMessage: "Dcode 正在准备重启并安装更新。",
       installingTitle: "正在安装更新",
-      installingMessage: "ZCode 即将重启完成安装。",
+      installingMessage: "Dcode 即将重启完成安装。",
       errorTitle: "自动升级失败",
       errorMessage: "你可以重试自动升级，或改用手动升级。",
       devSkippedTitle: "调试环境无法自动升级",
@@ -68,14 +68,14 @@ function buildForceUpdatePromptMessages(locale: Locale) {
 
   return {
     checkingTitle: "Checking for updates",
-    checkingMessage: "Keep this window open while ZCode checks for updates.",
+    checkingMessage: "Keep this window open while Dcode checks for updates.",
     downloadingTitle: "Downloading update",
     downloadingVersionTitle: "Downloading update v{version}",
-    downloadingMessage: "ZCode will install the update automatically after download.",
+    downloadingMessage: "Dcode will install the update automatically after download.",
     readyTitle: "Update downloaded",
-    readyMessage: "ZCode is preparing to restart and install the update.",
+    readyMessage: "Dcode is preparing to restart and install the update.",
     installingTitle: "Installing update",
-    installingMessage: "ZCode will restart to finish installing the update.",
+    installingMessage: "Dcode will restart to finish installing the update.",
     errorTitle: "Auto update failed",
     errorMessage: "You can retry auto update or use manual update.",
     devSkippedTitle: "Auto update unavailable in development",
@@ -307,7 +307,7 @@ function renderForceUpdatePromptHtml(text: ForceUpdateDialogText, locale: Locale
       <header class="titlebar">
         <div class="brand">
           <div class="brand-icon">${icon ? `<img src="${icon}" alt="" />` : "Z"}</div>
-          <div class="brand-title">ZCode</div>
+          <div class="brand-title">Dcode</div>
         </div>
         <button class="close" type="button" data-action="quit" aria-label="${escapeHtml(text.quitButton)}">×</button>
       </header>

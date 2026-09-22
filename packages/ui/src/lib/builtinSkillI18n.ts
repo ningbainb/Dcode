@@ -54,9 +54,9 @@ const BUILTIN_SKILL_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
       "Use before any creative work, including creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements, and design before implementation.",
   },
   "control-browser": {
-    "zh-CN": "控制 ZCode 内置浏览器，用于打开、检查、点击、输入、截图或验证网页和本地开发页面。",
+    "zh-CN": "控制 Dcode 内置浏览器，用于打开、检查、点击、输入、截图或验证网页和本地开发页面。",
     "en-US":
-      "Control ZCode's built-in browser to open, inspect, click, type, screenshot, or verify webpages and local development targets.",
+      "Control Dcode's built-in browser to open, inspect, click, type, screenshot, or verify webpages and local development targets.",
   },
   "dispatching-parallel-agents": {
     "zh-CN": "面对 2 个以上彼此独立、无共享状态或顺序依赖的任务时使用。",
@@ -114,8 +114,8 @@ const BUILTIN_SKILL_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
       "Use when completing tasks, implementing major features, or before merging to verify work meets requirements.",
   },
   "plugin-creator": {
-    "zh-CN": "创建、校验 ZCode 插件，并指导本地安装与更新。",
-    "en-US": "Create and validate ZCode plugins, and guide local installation and updates.",
+    "zh-CN": "创建、校验 Dcode 插件，并指导本地安装与更新。",
+    "en-US": "Create and validate Dcode plugins, and guide local installation and updates.",
   },
   "skill-creator": {
     "zh-CN":
@@ -157,9 +157,9 @@ const BUILTIN_SKILL_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   },
   "web-gui-tester": {
     "zh-CN":
-      "使用 ZCode Browser Use 对网页和本地 Web 前端执行纯 GUI 黑盒测试，通过真实用户交互、DOM 语义证据和截图验证功能、交互与响应式布局。",
+      "使用 Dcode Browser Use 对网页和本地 Web 前端执行纯 GUI 黑盒测试，通过真实用户交互、DOM 语义证据和截图验证功能、交互与响应式布局。",
     "en-US":
-      "Run pure GUI black-box tests against websites and local web frontends with ZCode Browser Use, combining real user interactions, semantic DOM evidence, and inspected screenshots.",
+      "Run pure GUI black-box tests against websites and local web frontends with Dcode Browser Use, combining real user interactions, semantic DOM evidence, and inspected screenshots.",
   },
   "writing-plans": {
     "zh-CN": "已有规格或多步骤任务需求，在动代码前用于编写实现计划。",

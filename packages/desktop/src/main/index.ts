@@ -88,7 +88,6 @@ import { createDesktopTelemetryFetch } from "./desktopTelemetryFetch.js";
 import {
   acknowledgePostUpdateReleaseNotes,
   getAutoUpdaterState,
-  hydratePendingPostUpdateReleaseNotes,
   initAutoUpdater,
   onAutoUpdaterStateChanged,
   refreshAutoUpdaterReleaseChannel,
@@ -1935,7 +1934,6 @@ app.whenReady().then(async () => {
     logger.warn("[desktop-network] Chromium network policy bootstrap failed:", error);
   }
 
-  await hydratePendingPostUpdateReleaseNotes(mainSettingService);
   logWindowsBundledRuntimeIntegrityDiagnostic();
 
   // 启动自动更新检查（后台执行，不阻塞主界面）
@@ -2179,7 +2177,7 @@ app.whenReady().then(async () => {
   registerDesktopNetworkTelemetry(logger);
 
   // DCode 使用独立版本号，不能被 ZCode 的最低版本策略阻止启动或替换安装。
-  logger.info("[force-update] DCode v0.1 has no update feed; upstream gate disabled");
+  logger.info("[force-update] Dcode v0.1 has no update feed; upstream gate disabled");
 
   logger.info("[startup] 创建主窗口");
   await primaryWindowCoordinator.ensurePrimaryWindow("app-ready");

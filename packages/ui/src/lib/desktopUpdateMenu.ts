@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 import {
   ZCODE_PRODUCT_FLAVOR,
   type ZCodeProductFlavor,
@@ -8,7 +9,7 @@ import {
 export function shouldShowDesktopUpdateEntry(
   flavor: ZCodeProductFlavor = ZCODE_PRODUCT_FLAVOR,
 ): boolean {
-  return flavor === "production";
+  return DCODE_UPSTREAM_SERVICES_ENABLED && flavor === "production";
 }
 
 export function getUpdateMenuLabelId(state: UpdateStatePayload | null) {

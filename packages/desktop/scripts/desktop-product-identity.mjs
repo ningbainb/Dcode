@@ -8,7 +8,7 @@ export const ZCODE_PREVIEW_IDENTITY_ENV = "ZCODE_PREVIEW_IDENTITY";
 const PRODUCTION_IDENTITY = Object.freeze({
   flavor: "production",
   appId: "com.dcode.desktop",
-  productName: "DCode",
+  productName: "Dcode",
   linuxExecutableName: "dcode",
   linuxPackageName: "dcode",
   cuaHelperInstallVariant: null,
@@ -17,7 +17,7 @@ const PRODUCTION_IDENTITY = Object.freeze({
 const PREVIEW_IDENTITY = Object.freeze({
   flavor: "preview",
   appId: "com.dcode.desktop.preview",
-  productName: "DCode Preview",
+  productName: "Dcode Preview",
   linuxExecutableName: "dcode-preview",
   linuxPackageName: "dcode-preview",
   cuaHelperInstallVariant: "preview",

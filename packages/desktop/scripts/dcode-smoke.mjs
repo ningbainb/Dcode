@@ -131,7 +131,7 @@ try {
   await terminalInput.waitFor({ timeout: 30000 });
   await terminalInput.focus();
   const terminalMarker = `DCODE_TERMINAL_OK_${Date.now()}`;
-  await page.keyboard.type(`echo ${terminalMarker} > dcode-terminal-smoke.txt`);
+  await page.keyboard.insertText(`echo ${terminalMarker} > dcode-terminal-smoke.txt`);
   await page.keyboard.press('Enter');
   const terminalDeadline = Date.now() + 30000;
   while (!(await readFile(join(workspace, 'dcode-terminal-smoke.txt'), 'utf8').catch(() => '')).replaceAll('\0', '').includes(terminalMarker)) {
@@ -144,6 +144,26 @@ try {
   await page.getByRole('button', { name: /^(Sign in with browser|浏览器登录)$/ }).waitFor();
   assert.equal(await page.getByRole('switch').isChecked(), false);
   await capture(page, '05-cloud-backup-settings.png');
+  assert.doesNotMatch(await page.locator('body').innerText(), /zcode/i);
+  await page.keyboard.press('Escape');
+  await page.locator('[data-testid="workspace-help-menu-trigger"]:visible').last().click();
+  const menuText = await page.getByRole('menu').innerText();
+  assert.doesNotMatch(menuText, /feedback|community|update|反馈|社区|更新/i);
+  await capture(page, '06-help-menu.png');
+  const nativeLabels = await app.evaluate(({ Menu }) => {
+    const flatten = items => items.flatMap(item => [item.label, ...(item.submenu ? flatten(item.submenu.items) : [])]);
+    return flatten(Menu.getApplicationMenu()?.items ?? []).join('\n');
+  });
+  assert.doesNotMatch(nativeLabels, /zcode|feedback|community|check for updates|what.s new|反馈|社区|检查更新|更新日志/i);
+  const aboutWindowPromise = app.waitForEvent('window');
+  await page.getByRole('menuitem', { name: /About|关于/ }).click();
+  const about = await aboutWindowPromise;
+  await about.waitForLoadState();
+  assert.match(await about.locator('body').innerText(), /Dcode/);
+  assert.doesNotMatch(await about.locator('body').innerText(), /ZCode/);
+  assert.match(await about.locator('img').getAttribute('src'), /^data:image\/png;base64,/);
+  await capture(about, '06-about-brand.png');
+  await about.getByRole('button').click();
   const identity = await app.evaluate(({ app }) => ({ packaged: app.isPackaged, resourcesPath: process.resourcesPath }));
   assert.deepEqual(explorerMenus(), originalMenus, 'Desktop startup must not modify Explorer registration');
   if (process.env.DCODE_TEST_EXECUTABLE) {
@@ -154,7 +174,7 @@ try {
   }
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
     toolOutputVisible: true, fileEdited: true, historyRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
-    explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
+    explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, brandingUI: true, upstreamEntrypointsRemoved: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
 } finally {
   if (app) {

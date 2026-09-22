@@ -7,7 +7,7 @@ import type {
 } from "@zcode/shared";
 
 const TITLE_MAX = 80;
-const FEEDBACK_ZCODE_AGENT_LABEL = "ZCode Agent";
+const FEEDBACK_ZCODE_AGENT_LABEL = "Dcode Agent";
 
 type MessageFormatter = (descriptor: { id: string }, values?: Record<string, string>) => string;
 

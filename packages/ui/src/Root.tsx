@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 /* eslint-disable max-lines -- Root 当前集中编排启动和 workspace shell wiring，先保持入口收口避免跨层状态拆散。 */
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LucideProvider, RefreshCw } from "lucide-react";
@@ -203,7 +204,7 @@ function RootInner({
   } = useSettings();
   const [welcomeScreenOpenReason, setWelcomeScreenOpenReason] =
     useState<WelcomeScreenOpenReason | null>(() =>
-      consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
+      DCODE_UPSTREAM_SERVICES_ENABLED && consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
     );
   const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
     useState(false);
@@ -838,7 +839,7 @@ function RootInner({
   }, [isSettingsTabActive, workspaceShellPath]);
 
   useEffect(() => {
-    if (!loginEntryRequest) {
+    if (!DCODE_UPSTREAM_SERVICES_ENABLED || !loginEntryRequest) {
       return;
     }
     // 登录入口已从模态弹窗收敛为 WelcomeScreen。
@@ -847,6 +848,7 @@ function RootInner({
   }, [loginEntryRequest]);
 
   const handleOpenLoginEntry = () => {
+    if (!DCODE_UPSTREAM_SERVICES_ENABLED) return;
     setWelcomeScreenOpenReason("manual-login");
   };
   const handleWelcomeScreenComplete = useCallback(
@@ -958,7 +960,7 @@ function RootInner({
     );
   }
 
-  if (welcomeScreenOpenReason) {
+  if (DCODE_UPSTREAM_SERVICES_ENABLED && welcomeScreenOpenReason) {
     return (
       <RootShell>
         {rootModelSelectionErrorNode}

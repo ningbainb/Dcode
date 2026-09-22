@@ -20,7 +20,7 @@ const GENERIC_ZCODE_UI_ERROR_MESSAGES = new Set([
   "Turn execution failed",
   "Compact failed",
   "Rewind failed",
-  "ZCode session failed",
+  "Dcode session failed",
 ]);
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {

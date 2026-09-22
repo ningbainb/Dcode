@@ -264,7 +264,7 @@ function createZCodeDataSizeTelemetryScheduler(
         // Bug 根因：Worker 可能在下一次 activity poll 前结束；若任务恰在这个窗口启动，
         // 旧实现会跳过 busy 检查直接上报。发送前同步复查，关闭该 TOCTOU 窗口。
         abortController.abort();
-        throw new DOMException("ZCode data size scan eligibility lost", "AbortError");
+        throw new DOMException("Dcode data size scan eligibility lost", "AbortError");
       }
       const reportReservedAt = Date.now();
       const previousState = await reserveReport(reportReservedAt);
@@ -275,7 +275,7 @@ function createZCodeDataSizeTelemetryScheduler(
       if (abortController.signal.aborted || collectionEligibilityLost(relaxedIdle)) {
         await rollbackReportReservation(previousState);
         abortController.abort();
-        throw new DOMException("ZCode data size report eligibility lost", "AbortError");
+        throw new DOMException("Dcode data size report eligibility lost", "AbortError");
       }
       try {
         await dependencies.report(result);

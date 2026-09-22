@@ -117,7 +117,7 @@ export function DshChatPanel({ workspacePath, onRefreshGit, onOpenDiff, draftReq
   }
   return <section className="flex h-full min-h-0 flex-col text-ui-base" data-testid="dcode-chat">
     <header className="flex flex-wrap items-center gap-2 border-b p-3">
-      <strong>DCode</strong><span className="text-foreground-subtle" role="status">DSH · {health.state === "ready" ? "Connected" : health.state}</span>
+      <strong>Dcode</strong><span className="text-foreground-subtle" role="status">DSH · {health.state === "ready" ? "Connected" : health.state}</span>
       <Button size="sm" variant="outline" onClick={() => void restart()} disabled={pending}>Restart Runtime</Button>
       <Button size="sm" variant="ghost" onClick={() => void service?.getLogsPath().then(path => platform.openExternalFile?.(path)).catch(report)}>Open Logs</Button>
       <Button size="sm" variant="outline" onClick={onOpenDiff}>View Diff</Button>
@@ -152,7 +152,7 @@ export function DshChatPanel({ workspacePath, onRefreshGit, onOpenDiff, draftReq
     </div>
     {approval && <div className="border-t p-3"><p>Permission required: {String(approval.reason ?? approval.description ?? "Review this tool operation")}</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap">{JSON.stringify(approval, null, 2)}</pre><Button onClick={() => void answer(true)}>Allow once</Button><Button variant="outline" onClick={() => void answer(false)}>Reject</Button></div>}
     <form className="flex gap-2 border-t p-3" onSubmit={event => { event.preventDefault(); void send(); }}>
-      <textarea aria-label="Message" className="min-h-20 flex-1 resize-none rounded border bg-background p-2" value={draft} onChange={event => setDraft(event.target.value)} placeholder="Ask DCode to read or modify this project…" onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} />
+      <textarea aria-label="Message" className="min-h-20 flex-1 resize-none rounded border bg-background p-2" value={draft} onChange={event => setDraft(event.target.value)} placeholder="Ask Dcode to read or modify this project…" onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} />
       {projection.busy ? <Button type="button" variant="outline" onClick={() => void service?.cancel(sessionId).catch(report)}>Stop</Button> : <Button type="submit" disabled={pending || !draft.trim() || health.state !== "ready"}>Send</Button>}
     </form>
   </section>;

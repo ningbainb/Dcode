@@ -1,4 +1,5 @@
 interface CustomAboutDialogHtmlInput {
+  logoDataUrl?: string;
   applicationName: string;
   appVersion: string;
   copyright: string;
@@ -171,7 +172,7 @@ export function createCustomAboutDialogHtml(input: CustomAboutDialogHtmlInput): 
       <section class="about-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
         <div class="content">
           <div class="app-icon" aria-hidden="true">
-            <svg class="app-logo" width="100" height="100" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2563eb"/><path d="M17 15h13c13 0 21 6 21 17s-8 17-21 17H17V15zm9 8v18h4c8 0 12-3 12-9s-4-9-12-9h-4z" fill="#fff"/><path d="m9 27-5 5 5 5m46-10 5 5-5 5" stroke="#93c5fd" stroke-width="3" fill="none"/></svg>
+            <img class="app-logo" width="100" height="100" alt="Dcode" src="${escapeHtml(input.logoDataUrl ?? "")}" />
           </div>
           <h1 id="about-title" class="title">
             ${escapeHtml(input.applicationName)}<br />

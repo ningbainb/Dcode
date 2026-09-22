@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 import { useCallback } from "react";
 import { resolveModelProviderFamilyIdByProviderId } from "@zcode/shared";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
@@ -132,6 +133,7 @@ export function CodingPlanUpgradeDialog({
     return null;
   }
 
+  if (!DCODE_UPSTREAM_SERVICES_ENABLED) return null;
   return (
     <CodingPlanEmbeddedWebviewDialog
       open

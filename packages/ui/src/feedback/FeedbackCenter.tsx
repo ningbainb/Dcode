@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Tabs, TabsContent } from "@/components/ui/tabs.js";
 import { Button } from "@/components/ui/button.js";
@@ -31,7 +32,7 @@ export const FeedbackCenter = memo(function FeedbackCenterComponent({
   const titleId =
     tab === "tickets" ? "feedback.center.ticketsTitle" : "feedback.center.submitTitle";
 
-  if (!feedbackService) return null;
+  if (!DCODE_UPSTREAM_SERVICES_ENABLED || !feedbackService) return null;
 
   return (
     <>

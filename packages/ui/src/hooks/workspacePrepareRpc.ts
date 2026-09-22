@@ -56,7 +56,7 @@ export async function prepareWorkspaceWithZCodeSessionService(params: {
   return {
     workspacePath: params.workspacePath,
     preparedSessionId: "",
-    version: "ZCode Protocol/1",
+    version: "Dcode Protocol/1",
     provider: params.provider,
     configOptions,
     slashCommands: presentation.slashCommands,

@@ -1,5 +1,5 @@
 export const OPENROUTER_ATTRIBUTION_HEADERS = {
-  "X-OpenRouter-Title": "ZCode",
+  "X-OpenRouter-Title": "Dcode",
   "X-OpenRouter-Categories": "programming-app",
 } as const;
 

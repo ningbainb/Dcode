@@ -18,11 +18,11 @@ export async function brandDcodeExecutable(executablePath) {
     resources.entries, group.id, group.lang, icon.icons.map(item => item.data),
   );
   for (const version of Resource.VersionInfo.fromEntries(resources.entries)) {
-    version.setFileVersion(0, 1, 0, 0);
-    version.setProductVersion(0, 1, 0, 0);
+    version.setFileVersion(0, 1, 1, 0);
+    version.setProductVersion(0, 1, 1, 0);
     for (const language of version.getAllLanguagesForStringValues()) version.setStringValues(language, {
-      FileDescription: 'DCode AI Coding Workspace', ProductName: 'DCode',
-      InternalName: 'DCode', OriginalFilename: 'DCode.exe',
+      FileDescription: 'Dcode AI Coding Workspace', ProductName: 'Dcode', CompanyName: 'Dcode',
+      InternalName: 'Dcode', OriginalFilename: 'Dcode.exe',
     });
     version.outputToResourceEntries(resources.entries);
   }
@@ -37,7 +37,7 @@ export async function brandDcodeExecutable(executablePath) {
   const temporary = `${executablePath}.brand-tmp`;
   await writeFile(temporary, Buffer.from(executable.generate()));
   await rename(temporary, executablePath);
-  console.log(`DCode Windows resources applied: ${executablePath}`);
+  console.log(`Dcode Windows resources applied: ${executablePath}`);
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {

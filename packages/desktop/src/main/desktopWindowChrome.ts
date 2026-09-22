@@ -1,3 +1,4 @@
+import { isDcodeBlockedUpstreamUrl } from "@zcode/shared";
 /* eslint-disable max-lines -- 桌面窗口 chrome、webview 安全策略和 popup 路由共享同一 BrowserWindow 生命周期上下文。 */
 import { app, BrowserWindow, Menu, nativeImage, nativeTheme, screen, shell } from "electron";
 import { join } from "node:path";
@@ -404,12 +405,14 @@ function attachEmbeddedBrowserWindowOpenHandler(options: {
         });
         return { action: "deny" };
       }
-      void shell.openExternal(url).catch((error: unknown) => {
-        options.logger.warn("[browser-pane] failed to open coding-plan popup externally", {
-          error: error instanceof Error ? error.message : String(error),
-          url,
-        });
-      });
+      void (isDcodeBlockedUpstreamUrl(url) ? Promise.resolve() : shell.openExternal(url)).catch(
+        (error: unknown) => {
+          options.logger.warn("[browser-pane] failed to open coding-plan popup externally", {
+            error: error instanceof Error ? error.message : String(error),
+            url,
+          });
+        },
+      );
       return { action: "deny" };
     }
 
@@ -419,12 +422,14 @@ function attachEmbeddedBrowserWindowOpenHandler(options: {
         externalBrowserModifierActive,
       })
     ) {
-      void shell.openExternal(url).catch((error: unknown) => {
-        options.logger.warn("[browser-pane] failed to open webview popup externally", {
-          error: error instanceof Error ? error.message : String(error),
-          url,
-        });
-      });
+      void (isDcodeBlockedUpstreamUrl(url) ? Promise.resolve() : shell.openExternal(url)).catch(
+        (error: unknown) => {
+          options.logger.warn("[browser-pane] failed to open webview popup externally", {
+            error: error instanceof Error ? error.message : String(error),
+            url,
+          });
+        },
+      );
       return { action: "deny" };
     }
 
@@ -472,12 +477,14 @@ function attachEmbeddedBrowserWindowOpenHandler(options: {
     // Coding Plan 专用 preload 会在后续主 frame 导航中继续存在。
     // 离开可信购买页时必须阻断 guest 导航并交给系统浏览器，避免第三方页面继承 zcodeBridge。
     event.preventDefault();
-    void shell.openExternal(url).catch((error: unknown) => {
-      options.logger.warn("[browser-pane] failed to open coding-plan navigation externally", {
-        error: error instanceof Error ? error.message : String(error),
-        url,
-      });
-    });
+    void (isDcodeBlockedUpstreamUrl(url) ? Promise.resolve() : shell.openExternal(url)).catch(
+      (error: unknown) => {
+        options.logger.warn("[browser-pane] failed to open coding-plan navigation externally", {
+          error: error instanceof Error ? error.message : String(error),
+          url,
+        });
+      },
+    );
   });
 }
 

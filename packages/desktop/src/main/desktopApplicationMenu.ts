@@ -107,7 +107,7 @@ function buildApplicationMenuTemplate(options: {
   const zoomInBinding = resolveMenuAccelerator(options, "zoomIn", "CmdOrCtrl+=");
   const zoomInVisibleAccelerator = zoomInBinding?.replace("=", "Plus");
 
-  return [
+  const template: Electron.MenuItemConstructorOptions[] = [
     ...(process.platform === "darwin"
       ? [
           {
@@ -349,6 +349,24 @@ function buildApplicationMenuTemplate(options: {
       ],
     },
   ];
+  const removed = new Set(
+    [
+      desktopMenuMessageIds.helpCheckForUpdates,
+      desktopMenuMessageIds.helpWhatsNew,
+      desktopMenuMessageIds.helpFeedback,
+      desktopMenuMessageIds.helpZCodeEndpoint,
+    ].map(getLabel),
+  );
+  const clean = (
+    items: Electron.MenuItemConstructorOptions[],
+  ): Electron.MenuItemConstructorOptions[] =>
+    items
+      .filter((item) => !item.label || !removed.has(item.label))
+      .map((item) => ({
+        ...item,
+        ...(Array.isArray(item.submenu) ? { submenu: clean(item.submenu) } : {}),
+      }));
+  return clean(template);
 }
 
 export function rebuildApplicationMenu(options: {

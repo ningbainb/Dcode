@@ -44,8 +44,8 @@ const messages = {
   pending: ["个待上传", "pending upload"],
   setup: ["配置当前项目", "Set up this project"],
   privateHint: [
-    "仅使用你拥有的私有 DCode 备份仓库。",
-    "Uses private DCode backup repositories owned by you.",
+    "仅使用你拥有的私有 Dcode 备份仓库。",
+    "Uses private Dcode backup repositories owned by you.",
   ],
   newRepo: ["新建私有仓库", "New private repository"],
   existingRepo: ["已有备份仓库", "Existing backup repository"],

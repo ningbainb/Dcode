@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 /* eslint-disable max-lines -- Model Provider 导航需要集中计算分组、选中项与 Coding Plan 权益态，后续拆分时再收敛。 */
 import { useEffect, useMemo } from "react";
 import type { ProviderSettingsFormProvider } from "@/lib/providerSettingsFormTypes.js";
@@ -223,7 +224,19 @@ export function useModelProviderNavigation({
       },
     ];
 
-    return groups;
+    return DCODE_UPSTREAM_SERVICES_ENABLED
+      ? groups
+      : groups
+          .map((group) => ({
+            ...group,
+            items: group.items.filter(
+              (item) =>
+                item.type === "custom" ||
+                (item.type === "preset" &&
+                  !resolveModelProviderFamilySpecByProviderId(item.presetId)),
+            ),
+          }))
+          .filter((group) => group.items.length > 0);
   }, [
     customProviders,
     codingPlanItems,
@@ -242,7 +255,9 @@ export function useModelProviderNavigation({
     const visibleKeys = new Set(visibleItems.map((item) => item.key));
     return [
       ...visibleItems,
-      ...connectionModeCodingPlanItems.filter((item) => !visibleKeys.has(item.key)),
+      ...(DCODE_UPSTREAM_SERVICES_ENABLED
+        ? connectionModeCodingPlanItems.filter((item) => !visibleKeys.has(item.key))
+        : []),
     ];
   }, [connectionModeCodingPlanItems, navigationGroups]);
 

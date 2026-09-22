@@ -19,7 +19,7 @@ export function OnboardingWelcomeView(props: { onStart: () => void; onOpenMigrat
             {/* 欢迎 logo 壳是固定深色底，边框不能跟随浅色主题 token，否则浅色主题下边框过重。*/}
             <div
               className="relative flex size-14 items-center justify-center rounded-xl bg-[linear-gradient(180deg,#000000_0%,#151718_100%)] text-[#ffffff] shadow-lg/20 before:pointer-events-none before:absolute before:inset-0 before:rounded-xl before:border before:border-[rgba(255,255,255,0.1)]"
-              aria-label="ZCode"
+              aria-label="Dcode"
               role="img"
             >
               <ZCodeAboutLogo className="h-auto w-8" />

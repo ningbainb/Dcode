@@ -26,7 +26,7 @@ export function scanZCodeDataDirectoryInWorker(
     };
     const abort = () => {
       void worker.terminate();
-      finish(() => reject(new DOMException("ZCode data size scan aborted", "AbortError")));
+      finish(() => reject(new DOMException("Dcode data size scan aborted", "AbortError")));
     };
 
     worker.once("message", (message: unknown) => {
@@ -40,7 +40,7 @@ export function scanZCodeDataDirectoryInWorker(
           new Error(
             response.ok === false && typeof response.error === "string"
               ? response.error
-              : "Invalid ZCode data size worker response",
+              : "Invalid Dcode data size worker response",
           ),
         ),
       );
@@ -48,7 +48,7 @@ export function scanZCodeDataDirectoryInWorker(
     worker.once("error", (error) => finish(() => reject(error)));
     worker.once("exit", (code) => {
       if (code !== 0) {
-        finish(() => reject(new Error(`ZCode data size worker exited with code ${code}`)));
+        finish(() => reject(new Error(`Dcode data size worker exited with code ${code}`)));
       }
     });
     signal.addEventListener("abort", abort, { once: true });

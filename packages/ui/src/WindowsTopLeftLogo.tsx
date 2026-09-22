@@ -1,5 +1,5 @@
 import { cn } from "@/components/lib/utils.js";
-import zaiLogoUrl from "@/assets/dcode-logo.svg";
+import zaiLogoUrl from "@/assets/dcode-logo.png";
 
 export function WindowsTopLeftLogo({
   className,
@@ -21,7 +21,7 @@ export function WindowsTopLeftLogo({
     >
       <img
         src={zaiLogoUrl}
-        alt="DCode"
+        alt="Dcode"
         className={cn("pointer-events-none size-5 select-none", imageClassName)}
         draggable={false}
       />

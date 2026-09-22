@@ -18,8 +18,8 @@ if (missing.length) throw new Error(`Missing desktop dependencies: ${missing.map
 export default {
   ...base,
   appId: 'com.dcode.desktop',
-  productName: 'DCode',
-  extraMetadata: { ...base.extraMetadata, name: 'dcode-desktop', version: '0.1.0', zcodeProductFlavor: 'production' },
+  productName: 'Dcode',
+  extraMetadata: { ...base.extraMetadata, name: 'dcode-desktop', author: { name: 'Dcode' }, homepage: null, version: '0.1.1', zcodeProductFlavor: 'production' },
   directories: { ...base.directories, output: resolve(import.meta.dirname, '../../../../artifacts/v0.1') },
   // UI/services 已内联，不能再遍历其整棵依赖树并重复打入独立部署的 DSH。
   files: [...base.files, '!node_modules/**/*',
@@ -34,12 +34,12 @@ export default {
     { from: '../../LICENSE', to: 'ZCode-LICENSE' },
     { from: '../../NOTICE.DCode.md', to: 'NOTICE.DCode.md' },
   ],
-  protocols: [{ name: 'DCode', schemes: ['dcode'] }],
-  win: { ...base.win, target: ['zip'], artifactName: 'DCode-${version}-win-${arch}.${ext}', signAndEditExecutable: false },
+  protocols: [{ name: 'Dcode', schemes: ['dcode'] }],
+  win: { ...base.win, target: ['zip'], artifactName: 'Dcode-${version}-win-${arch}.${ext}', signAndEditExecutable: false },
   publish: null,
   afterPack: async context => {
     await base.afterPack(context);
-    if (context.electronPlatformName === 'win32') await brandDcodeExecutable(resolve(context.appOutDir, 'DCode.exe'));
+    if (context.electronPlatformName === 'win32') await brandDcodeExecutable(resolve(context.appOutDir, 'Dcode.exe'));
     verifyPackagedRenderer(resolve(context.appOutDir, 'resources/app.asar'));
     verifyDcodeRuntime(resolve(context.appOutDir, 'resources/dsh-runtime'));
   },

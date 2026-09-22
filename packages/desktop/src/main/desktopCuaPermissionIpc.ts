@@ -190,13 +190,13 @@ function waitForCuaApplicationReturn({
       inspectFrontmost();
       maybeFinishReturn();
     };
-    const onQuit = () => finish(new Error("ZCode quit during CUA permission onboarding"));
+    const onQuit = () => finish(new Error("Dcode quit during CUA permission onboarding"));
     const onAbort = () =>
       finish(signal.reason ?? new Error("CUA permission onboarding origin window closed"));
     observationTimer = setTimeout(
       () =>
         finish(
-          new Error(`System Settings did not return to ZCode within ${Math.max(1, timeoutMs)}ms`),
+          new Error(`System Settings did not return to Dcode within ${Math.max(1, timeoutMs)}ms`),
         ),
       Math.max(1, timeoutMs),
     );

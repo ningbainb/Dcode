@@ -1,3 +1,4 @@
+import { DCODE_UPSTREAM_SERVICES_ENABLED } from "@zcode/shared";
 import type { IPlatformService, UpdateStatePayload } from "@zcode/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
@@ -274,7 +275,7 @@ export function UpdateStatusDialogController({
     };
   }, [setUpdateActionInFlight, updateActionInFlight, updateState?.kind]);
 
-  if (!displayVersion) return null;
+  if (!DCODE_UPSTREAM_SERVICES_ENABLED || !displayVersion) return null;
 
   const releaseDateLabel = restoredReleaseDate
     ? intl.formatMessage({ id: "updateDialog.releaseDate" }, { date: restoredReleaseDate })

@@ -87,12 +87,12 @@ function readRuntimeEnvValue(
 export function normalizeZCodeEndpointOrigin(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) {
-    throw new Error("ZCode endpoint origin is empty");
+    throw new Error("Dcode endpoint origin is empty");
   }
 
   const parsed = new URL(trimmed);
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    throw new Error("ZCode endpoint origin must use http or https");
+    throw new Error("Dcode endpoint origin must use http or https");
   }
   return parsed.origin;
 }

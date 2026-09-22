@@ -6,8 +6,8 @@ const MENU_KEY_NAME = "DCode.OpenInDCode";
 const DIRECTORY_MENU_KEY = `HKCU\\Software\\Classes\\Directory\\shell\\${MENU_KEY_NAME}`;
 const DRIVE_MENU_KEY = `HKCU\\Software\\Classes\\Drive\\shell\\${MENU_KEY_NAME}`;
 const MENU_LABELS: Record<Locale, string> = {
-  "zh-CN": "在DCode中打开",
-  "en-US": "Open in DCode",
+  "zh-CN": "在Dcode中打开",
+  "en-US": "Open in Dcode",
 };
 
 type Logger = {
