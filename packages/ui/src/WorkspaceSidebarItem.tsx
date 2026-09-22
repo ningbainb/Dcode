@@ -137,6 +137,7 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
   onSelectTask,
   onStartDraftInWorkspace,
   taskItems,
+  hideTaskList = false,
   taskListLoading,
   taskListHasMore,
   taskListHasUnread = false,
@@ -165,6 +166,7 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
   ) => void;
   onStartDraftInWorkspace: (targetWorkspacePath: string, targetWorkspaceIdentity?: string) => void;
   taskItems: ZCodeTaskMeta[];
+  hideTaskList?: boolean;
   taskListLoading: boolean;
   taskListHasMore: boolean;
   taskListHasUnread?: boolean;
@@ -1114,27 +1116,29 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
           </div>
         </BorderBeam>
 
-        <CollapsibleContent>
-          <TaskList
-            workspacePath={tab.workspacePath}
-            remoteSessionId={tab.remoteSessionId}
-            workspaceIdentity={tab.workspaceIdentity}
-            tasks={taskItems}
-            pinnedTasks={EMPTY_PINNED_TASKS}
-            activeTaskId={isActiveWorkspace ? activeTaskId : null}
-            onSelectTask={handleSelectTask}
-            showCreateButton={false}
-            showFooter={false}
-            loading={taskListLoading}
-            hasMore={taskListHasMore}
-            onShowMore={onShowMoreTasks}
-            onRenameTask={handleRenameTask}
-            onSetTaskPinned={handleSetTaskPinned}
-            onArchiveTask={handleArchiveTask}
-            onSetTaskUnread={handleSetTaskUnread}
-            readOnlyReason={readOnlyReason}
-          />
-        </CollapsibleContent>
+        {!hideTaskList ? (
+          <CollapsibleContent>
+            <TaskList
+              workspacePath={tab.workspacePath}
+              remoteSessionId={tab.remoteSessionId}
+              workspaceIdentity={tab.workspaceIdentity}
+              tasks={taskItems}
+              pinnedTasks={EMPTY_PINNED_TASKS}
+              activeTaskId={isActiveWorkspace ? activeTaskId : null}
+              onSelectTask={handleSelectTask}
+              showCreateButton={false}
+              showFooter={false}
+              loading={taskListLoading}
+              hasMore={taskListHasMore}
+              onShowMore={onShowMoreTasks}
+              onRenameTask={handleRenameTask}
+              onSetTaskPinned={handleSetTaskPinned}
+              onArchiveTask={handleArchiveTask}
+              onSetTaskUnread={handleSetTaskUnread}
+              readOnlyReason={readOnlyReason}
+            />
+          </CollapsibleContent>
+        ) : null}
       </Collapsible>
       <RemoteSyncDialogs
         canSyncSkills={showRemoteSkillSyncAction}

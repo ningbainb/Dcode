@@ -55,6 +55,7 @@ import {
 } from "@/lib/accountProviderAccess.js";
 import { buildUsageEntitlementCacheKey } from "@/lib/usageEntitlementCache.js";
 import { ModelProviderSection } from "@/settings/ModelProviderSection.js";
+import { DshSettings } from "@/dsh/DshSettings.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
 import { UsageStatsSection, type UsageStatsSectionTab } from "@/settings/UsageStatsSection.js";
@@ -659,6 +660,9 @@ export function SettingsPage({
     activeWorkspaceIdentity?.trim() ||
     activeWorkspaceTab?.remoteSessionId?.trim() ||
     activeWorkspaceTab?.remoteTarget,
+  );
+  const usesDshRuntimeSettings = Boolean(
+    isDesktop && !activeWorkspaceTab?.remoteSessionId && !activeWorkspaceTab?.remoteTarget,
   );
   const selectDirectory = useSelectDirectory();
   const services = useServices();
@@ -1652,6 +1656,24 @@ export function SettingsPage({
                         ) : null}
                       </div>
                       <div className="space-y-8">
+                        {usesDshRuntimeSettings &&
+                        [
+                          "memory",
+                          "plugin",
+                          "mcp",
+                          "skill",
+                          "subagents",
+                          "automations",
+                          "commands",
+                          "hooks",
+                        ].includes(activeSection) ? (
+                          <p
+                            role="note"
+                            className="rounded-lg border border-border/60 bg-card/60 p-3 text-ui-sm text-foreground-subtle"
+                          >
+                            {intl.formatMessage({ id: "settings.dshLegacySectionNotice" })}
+                          </p>
+                        ) : null}
                         {activeSection === "general" ? (
                           <GeneralSectionContent
                             localePreference={localePreference}
@@ -1809,18 +1831,21 @@ export function SettingsPage({
                           <ShortcutSettingsSection isDesktop={Boolean(isDesktop)} />
                         ) : activeSection === "modelProvider" ? (
                           <ServiceProvider services={localHostServices}>
-                            {/* 模型配置属于本机全局事实源；激活远端 workspace 时也不能注入远端 Host。 */}
-                            <ModelProviderSection
-                              workspacePath={activeWorkspacePath ?? captionWorkspacePath ?? ""}
-                              connectivityWorkspacePath={
-                                localModelProviderConnectivityWorkspacePath
-                              }
-                              connectivityWorkspaceRequired={isRemoteModelProviderWorkspace}
-                              pendingModelProviderTarget={pendingModelProviderTarget}
-                              onConsumePendingModelProviderTarget={() =>
-                                setPendingModelProviderTarget(undefined)
-                              }
-                            />
+                            {usesDshRuntimeSettings ? (
+                              <DshSettings />
+                            ) : (
+                              <ModelProviderSection
+                                workspacePath={activeWorkspacePath ?? captionWorkspacePath ?? ""}
+                                connectivityWorkspacePath={
+                                  localModelProviderConnectivityWorkspacePath
+                                }
+                                connectivityWorkspaceRequired={isRemoteModelProviderWorkspace}
+                                pendingModelProviderTarget={pendingModelProviderTarget}
+                                onConsumePendingModelProviderTarget={() =>
+                                  setPendingModelProviderTarget(undefined)
+                                }
+                              />
+                            )}
                           </ServiceProvider>
                         ) : activeSection === "memory" ? (
                           <ServiceProvider services={localHostServices}>
@@ -1878,7 +1903,10 @@ export function SettingsPage({
                             }}
                           />
                         ) : activeSection === "cloudBackup" ? (
-                          <CloudBackupSection key={activeWorkspacePath ?? "no-project"} workspacePath={activeWorkspacePath} />
+                          <CloudBackupSection
+                            key={activeWorkspacePath ?? "no-project"}
+                            workspacePath={activeWorkspacePath}
+                          />
                         ) : activeSection === "migration" ? (
                           <MigrationSection
                             workspacePath={activeWorkspacePath}

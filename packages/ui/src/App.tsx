@@ -272,11 +272,14 @@ export function App({
   });
   const workspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
   const notificationEnabled = useZCodeStore((s) => s.notificationEnabled);
+  // Local Desktop conversations are owned by DSH. The legacy ZCode index is
+  // unavailable there and must not be subscribed just to drive notifications.
+  const usesDshLocalWorkspace = Boolean(isDesktop && !workspaceRemoteSessionId);
   useWorkspaceTerminalTaskNotifications({
     workspacePath: workspaceAbsPath,
     ...(workspaceIdentity ? { workspaceIdentity } : {}),
     ...(workspaceRemoteSessionId ? { endpointKey: workspaceRemoteSessionId } : {}),
-    enabled: notificationEnabled,
+    enabled: Boolean(notificationEnabled && !usesDshLocalWorkspace),
     rpcReady: workspaceRpcReady,
     platform,
     formatMessage: intl.formatMessage,
@@ -285,7 +288,7 @@ export function App({
   useOffPeakTaskNotifications({
     offPeakTaskService: services.offPeakTaskService,
     platform,
-    enabled: Boolean(notificationEnabled && isDesktop),
+    enabled: Boolean(notificationEnabled && isDesktop && !usesDshLocalWorkspace),
     formatMessage: intl.formatMessage,
   });
   const lastHandledDraftSidePaneCloseRef = useRef({

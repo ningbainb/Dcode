@@ -33,11 +33,19 @@ const server = createServer(async (request, response) => {
       choices: [{ index: 0, delta, finish_reason: finish }],
     })}\n\n`);
     const toolResults = (body.messages ?? []).filter(message => message.role === 'tool').length;
-    const lastUser = (body.messages ?? []).findLast(message => message.role === 'user');
-    if (JSON.stringify(lastUser).includes('DCODE_CANCEL_TEST')) {
+    const lastHumanUser = (body.messages ?? []).filter(message => message.role === 'user' &&
+      !String(message.content).startsWith('Current runtime context.') &&
+      !String(message.content).includes('<available_skills>')).at(-1);
+    if (JSON.stringify(lastHumanUser).includes('DCODE_CANCEL_TEST')) {
       for (let index = 0; index < 600 && !response.destroyed; index++) {
         send({ role: 'assistant', content: `Waiting ${index}. ` }); await delay(100);
       }
+      response.end('data: [DONE]\n\n');
+      return;
+    }
+    if (JSON.stringify(lastHumanUser).includes('DCODE_SECOND_SESSION')) {
+      send({ role: 'assistant', content: 'DCODE_SECOND_SESSION_REPLY' });
+      send({}, 'stop');
       response.end('data: [DONE]\n\n');
       return;
     }

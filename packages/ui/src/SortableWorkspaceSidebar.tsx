@@ -21,6 +21,7 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
   onSelectTask,
   onStartDraftInWorkspace,
   taskItems,
+  hideTaskList = false,
   taskListLoading,
   taskListHasMore,
   taskListHasUnread = false,
@@ -46,6 +47,7 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
   ) => void;
   onStartDraftInWorkspace: (targetWorkspacePath: string, targetWorkspaceIdentity?: string) => void;
   taskItems: ZCodeTaskMeta[];
+  hideTaskList?: boolean;
   taskListLoading: boolean;
   taskListHasMore: boolean;
   taskListHasUnread?: boolean;
@@ -115,6 +117,7 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
       onSelectTask={onSelectTask}
       onStartDraftInWorkspace={onStartDraftInWorkspace}
       taskItems={taskItems}
+      hideTaskList={hideTaskList}
       taskListLoading={taskListLoading}
       taskListHasMore={taskListHasMore}
       taskListHasUnread={taskListHasUnread}

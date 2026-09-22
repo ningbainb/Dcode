@@ -2183,6 +2183,7 @@ const enUS: Record<string, string> = {
   "settings.previewBadge.light": "Light",
   "settings.previewBadge.dark": "Dark",
   "settings.modelProviderTitle": "Model settings",
+  "settings.dshLegacySectionNotice": "These settings are not connected to Dcode's current DeepSeek Harness tasks. Changes here do not affect chat execution; use the capabilities shown in the chat workspace.",
   "settings.mcpTitle": "MCP Servers",
   "settings.mcp.description": "Manage MCP server configurations used by Dcode Agent.",
   "settings.mcp.create.open": "Add MCP server",

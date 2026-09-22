@@ -8,7 +8,7 @@ import { createFixture } from '../../dsh-runtime/test/fixture.mjs';
 const desktop = resolve(import.meta.dirname, '..');
 const workspaceRoot = resolve(desktop, '../../../..');
 const data = resolve(process.env.DCODE_UI_TEST_ROOT || join(workspaceRoot, '.data/ui-smoke'));
-const { workspace, server } = await createFixture(data);
+const { workspace, server, requests } = await createFixture(data);
 await mkdir(join(data, 'home'), { recursive: true });
 await writeFile(join(workspace, 'output.txt'), 'baseline\n');
 for (const args of [['init'], ['add', '.'], ['-c', 'user.name=DCode Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'Fixture baseline']]) {
@@ -36,7 +36,7 @@ try {
   const inheritedEnv = { ...process.env };
   // Electron 按变量是否存在切换 Node 模式，设为空字符串仍会禁用桌面启动。
   delete inheritedEnv.ELECTRON_RUN_AS_NODE;
-  app = await _electron.launch({
+  const launchOptions = {
     executablePath: process.env.DCODE_TEST_EXECUTABLE || resolve(desktop, '../../node_modules/electron/dist/electron.exe'),
     args: process.env.DCODE_TEST_EXECUTABLE ? [] : [desktop],
     cwd: workspaceRoot, timeout: 120000,
@@ -48,14 +48,15 @@ try {
       ZCODE_DESKTOP_APPLICATION_NAME: 'DCode Smoke', DSH_TELEMETRY_DISABLED: '1',
       TEMP: join(workspaceRoot, '.cache/tmp'), TMP: join(workspaceRoot, '.cache/tmp'),
     },
-  });
+  };
+  app = await _electron.launch(launchOptions);
   app.process().stderr.on('data', chunk => errors.push(chunk.toString()));
-  const page = await app.firstWindow({ timeout: 120000 });
+  let page = await app.firstWindow({ timeout: 120000 });
   console.log('[smoke] Main window created');
   page.on('pageerror', error => errors.push(error.message));
   await page.waitForLoadState('domcontentloaded');
   await capture(page, '01-startup.png');
-  const chat = page.locator('[data-testid="dcode-chat"]:visible');
+  let chat = page.locator('[data-testid="dcode-chat"]:visible');
   await chat.waitFor({ timeout: 180000 });
   await page.waitForFunction(() => document.body.classList.contains('zcode-startup-ready'));
   await app.evaluate(({ BrowserWindow, dialog }, path) => {
@@ -65,15 +66,18 @@ try {
   await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
   console.log('[smoke] Test workspace opened');
   await chat.getByRole('status').filter({ hasText: 'Connected' }).waitFor({ timeout: 180000 });
-  await chat.getByText('Agent Runtime Settings', { exact: true }).click();
-  await chat.getByLabel('Provider ID', { exact: true }).fill('desktop-ui-fixture');
-  await chat.getByLabel('Base URL', { exact: true }).fill(`http://127.0.0.1:${server.address().port}/v1`);
-  await chat.getByLabel('Model ID', { exact: true }).fill('dcode-fixture');
-  await chat.getByLabel('API Key', { exact: true }).fill('synthetic-local-test-key');
-  await chat.getByRole('button', { name: 'Save to DSH', exact: true }).click();
-  await chat.getByText('Saved to DeepSeek Harness.', { exact: true }).waitFor({ timeout: 30000 });
-  assert.equal(await chat.getByLabel('API Key', { exact: true }).inputValue(), '');
-  await chat.getByText('Agent Runtime Settings', { exact: true }).click();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
+  const modelSettings = page.getByTestId('dsh-model-settings');
+  await modelSettings.getByLabel('Provider ID', { exact: true }).fill('desktop-ui-fixture');
+  await modelSettings.getByLabel('Base URL', { exact: true }).fill(`http://127.0.0.1:${server.address().port}/v1`);
+  await modelSettings.getByLabel('Model ID', { exact: true }).fill('dcode-fixture');
+  await modelSettings.getByLabel('API Key', { exact: true }).fill('synthetic-local-test-key');
+  await modelSettings.getByRole('button', { name: 'Save to DSH', exact: true }).click();
+  await modelSettings.getByText('Saved to DeepSeek Harness.', { exact: true }).waitFor({ timeout: 30000 });
+  assert.equal(await modelSettings.getByLabel('API Key', { exact: true }).inputValue(), '');
+  await page.getByTestId('settings-back-button').click();
+  await modelSettings.waitFor({ state: 'hidden' });
   await chat.getByLabel('Model', { exact: true }).selectOption('desktop-ui-fixture/dcode-fixture');
   await chat.getByLabel('Message', { exact: true }).fill('Read input.txt, write and edit output.txt, then execute the verification command.');
   await capture(page, '01-ready.png');
@@ -93,20 +97,48 @@ try {
     await page.waitForTimeout(300);
   }
   assert.ok((await chat.innerText()).includes('DCODE_SHELL_OK'));
+  await chat.getByTestId('dcode-messages').getByRole('button', { name: /read.*Completed/i }).first().click();
   assert.ok((await chat.innerText()).includes('DCode input'));
   assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('<available_skills>'), 'internal skill catalogs must not render as user messages');
   assert.equal(await readFile(join(workspace, 'output.txt'), 'utf8'), 'edited version\n');
   await capture(page, '02-tools.png');
-  const savedSession = await chat.getByLabel('Session History', { exact: true }).inputValue();
-  await chat.getByRole('button', { name: 'New Session', exact: true }).click();
+  const sessionList = page.getByTestId('dsh-session-list');
+  await sessionList.getByTestId('dsh-session-item').first().waitFor({ timeout: 30000 });
+  const savedSession = await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id');
+  assert.ok(savedSession, 'first DSH session should be selected in the sidebar');
+  await page.getByTestId('conversation-new-task').click();
   await chat.getByText('AI Coding Workspace', { exact: true }).waitFor();
-  await chat.getByLabel('Session History', { exact: true }).selectOption(savedSession);
+  await chat.getByLabel('Message', { exact: true }).fill('DCODE_SECOND_SESSION');
+  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await chat.getByTestId('dcode-messages').getByText('DCODE_SECOND_SESSION_REPLY', { exact: false }).waitFor({ timeout: 30000 });
+  const secondSession = await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id');
+  assert.ok(secondSession && secondSession !== savedSession, 'new task should create one distinct DSH session');
+  await sessionList.locator(`[data-session-id="${savedSession}"]`).click();
   await chat.getByTestId('dcode-messages').getByText('DCODE_SHELL_OK', { exact: false }).last().waitFor();
-  await chat.getByRole('button', { name: 'Restart Runtime', exact: true }).click();
-  await page.waitForFunction(() => {
-    const panel = [...document.querySelectorAll('[data-testid="dcode-chat"]')].find(element => element.getBoundingClientRect().height > 0);
-    return panel && [...panel.querySelectorAll('button')].some(button => button.textContent === 'Restart Runtime' && !button.disabled);
-  }, null, { timeout: 120000 });
+  assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SECOND_SESSION_REPLY'));
+  const secondWorkspace = join(data, 'project-two');
+  await mkdir(secondWorkspace, { recursive: true });
+  await app.evaluate(({ BrowserWindow, dialog }, path) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
+    BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
+  }, secondWorkspace);
+  await chat.getByText(secondWorkspace, { exact: true }).waitFor({ timeout: 30000 });
+  await chat.getByText('AI Coding Workspace', { exact: true }).waitFor();
+  assert.equal(await sessionList.getByTestId('dsh-session-item').count(), 0, 'other project must not show first project sessions');
+  await app.evaluate(({ BrowserWindow, dialog }, path) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
+    BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
+  }, workspace);
+  await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
+  await chat.getByTestId('dcode-messages').getByText('DCODE_SHELL_OK', { exact: false }).last().waitFor();
+  assert.equal(await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id'), savedSession);
+  await page.keyboard.press('Control+,');
+  await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
+  await page.getByText('Runtime diagnostics', { exact: true }).click();
+  await page.getByRole('button', { name: 'Restart Runtime', exact: true }).click();
+  await page.getByText('Runtime restarted.', { exact: true }).waitFor({ timeout: 120000 });
+  await page.getByTestId('settings-back-button').click();
+  await page.getByTestId('dsh-model-settings').waitFor({ state: 'hidden' });
   assert.ok((await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SHELL_OK'));
   await chat.getByLabel('Message', { exact: true }).fill('DCODE_CANCEL_TEST');
   await chat.getByRole('button', { name: 'Send', exact: true }).click();
@@ -121,7 +153,22 @@ try {
     await page.waitForTimeout(100);
   }
   console.log('[smoke] Session history, runtime restart and Stop verified');
-  await chat.getByRole('button', { name: 'View Diff', exact: true }).click();
+  await app.close();
+  app = await _electron.launch(launchOptions);
+  app.process().stderr.on('data', chunk => errors.push(chunk.toString()));
+  page = await app.firstWindow({ timeout: 120000 });
+  page.on('pageerror', error => errors.push(error.message));
+  chat = page.locator('[data-testid="dcode-chat"]:visible');
+  await chat.waitFor({ timeout: 180000 });
+  await app.evaluate(({ BrowserWindow, dialog }, path) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
+    BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
+  }, workspace);
+  await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
+  await chat.getByTestId('dcode-messages').getByText('DCODE_SHELL_OK', { exact: false }).last().waitFor({ timeout: 30000 });
+  assert.equal(await page.getByTestId('dsh-session-list').locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id'), savedSession);
+  assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SECOND_SESSION_REPLY'));
+  await chat.getByRole('button', { name: 'View changes', exact: true }).click();
   await page.getByText('output.txt', { exact: true }).last().waitFor({ timeout: 30000 });
   await page.getByText('output.txt', { exact: true }).last().click();
   await page.waitForTimeout(2000);
@@ -172,8 +219,10 @@ try {
     assert.ok(Object.values(profile.dependencies).every(value => value.includes('/resources/dsh-runtime/')));
     assert.equal(spawnSync(join(identity.resourcesPath, 'dsh-runtime/node.exe'), ['--version'], { encoding: 'utf8', windowsHide: true }).stdout.trim(), 'v24.14.0');
   }
+  assert.ok(!errors.join('\n').includes('zcode-agent.subscribeSessionsIndexV4 FAIL'),
+    'Local DSH workspaces must not subscribe to the unavailable legacy agent index');
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
-    toolOutputVisible: true, fileEdited: true, historyRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
+    toolOutputVisible: true, fileEdited: true, historyRestored: true, projectSwitchIsolated: true, appRestartRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
     explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, brandingUI: true, upstreamEntrypointsRemoved: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
 } finally {
@@ -185,6 +234,7 @@ try {
     await app.close().catch(error => errors.push(error.message));
   }
   await writeFile(join(data, 'desktop-errors.log'), errors.join('\n'));
+  await writeFile(join(data, 'fixture-requests.json'), JSON.stringify(requests, null, 2));
   server.closeAllConnections();
   await new Promise(done => server.close(done));
 }

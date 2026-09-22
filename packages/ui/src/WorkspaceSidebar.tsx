@@ -47,6 +47,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type { Locale, RemoteTarget, UserInfo, ZCodeTaskMeta } from "@zcode/shared";
+import type { DshSession } from "@zcode/services";
+import { DshSessionList } from "@/dsh/DshSessionList.js";
 import { BUILTIN_MODEL_PROVIDER_IDS } from "@zcode/shared";
 import {
   TID_CONVERSATION_NEW_TASK,
@@ -223,6 +225,11 @@ function resolveSidebarTaskViewMode(params: {
 export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   workspacePath,
   workspaceRemoteSessionId,
+  dshSessions,
+  dshSelectedSessionId = null,
+  dshSessionsLoading = false,
+  dshSessionsError = null,
+  onSelectDshSession,
   activePreviewPath,
   onSelectTask,
   onStartDraftInWorkspace,
@@ -265,6 +272,11 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
 }: {
   workspacePath: string;
   workspaceRemoteSessionId?: string;
+  dshSessions?: DshSession[];
+  dshSelectedSessionId?: string | null;
+  dshSessionsLoading?: boolean;
+  dshSessionsError?: string | null;
+  onSelectDshSession?: (sessionId: string) => void;
   activePreviewPath?: string | null;
   onSelectTask: (
     targetWorkspacePath: string,
@@ -562,10 +574,13 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
       setWorkspaceTaskOrganizeBy(taskOrganizeBy);
     }
   }, [taskOrganizeBy]);
-  const taskViewMode = resolveSidebarTaskViewMode({
-    showArchivedTasks,
-    taskOrganizeBy,
-  });
+  const usesDshSessions = isDesktop && dshSessions !== undefined;
+  const taskViewMode = usesDshSessions
+    ? "workspace"
+    : resolveSidebarTaskViewMode({
+        showArchivedTasks,
+        taskOrganizeBy,
+      });
   const effectiveTaskViewMode = taskViewMode;
   const visibleWorkspaceTaskKeys = useMemo(
     () =>
@@ -608,12 +623,13 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
     setCreateGroupedTaskDraftAction(() => action);
   }, []);
   const shouldShowPinnedTasks =
+    !usesDshSessions &&
     // grouped 主体会主动过滤 pinned task；如果同页不渲染全局置顶区，
     // 从 Header 置顶当前任务后整条 row 会无处展示，看起来像 session 被删除。
-    taskViewMode === "workspace" ||
-    taskViewMode === "timeline" ||
-    taskViewMode === "archived" ||
-    taskViewMode === "grouped";
+    (taskViewMode === "workspace" ||
+      taskViewMode === "timeline" ||
+      taskViewMode === "archived" ||
+      taskViewMode === "grouped");
   const workspaceScrollRef = useRef<HTMLDivElement | null>(null);
   const [showWorkspaceTopMask, setShowWorkspaceTopMask] = useState(false);
   const [showWorkspaceBottomMask, setShowWorkspaceBottomMask] = useState(false);
@@ -627,8 +643,12 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
     }),
   );
   const localeMenuValue = localePreference === "system" ? "system" : localePreference;
+  const workspaceTaskListTabs = useMemo(
+    () => (usesDshSessions ? [] : projectWorkspaceTabs),
+    [projectWorkspaceTabs, usesDshSessions],
+  );
   const workspaceTaskLists = useWorkspaceTaskLists({
-    workspaceTabs: projectWorkspaceTabs,
+    workspaceTabs: workspaceTaskListTabs,
     activeWorkspacePath: workspacePath,
     activeWorkspaceIdentity: workspaceIdentity,
     sortBy: taskSortBy,
@@ -1358,7 +1378,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
               }
               style={workspaceScrollMaskStyle}
             >
-              {workspaceTaskToolbar()}
+              {usesDshSessions ? null : workspaceTaskToolbar()}
               {shouldShowPinnedTasks ? (
                 // 归档切换主任务区时不应隐藏 pinned。
                 // pinned 是全局置顶区，归档态保持置顶区可见。
@@ -1534,6 +1554,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
                                             toggleWorkspaceExpanded={toggleWorkspaceExpanded}
                                             onSelectTask={onSelectTask}
                                             onStartDraftInWorkspace={onStartDraftInWorkspace}
+                                            hideTaskList={usesDshSessions}
                                             taskItems={
                                               taskGroup?.items ?? EMPTY_WORKSPACE_TASK_ITEMS
                                             }
@@ -1617,20 +1638,30 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
                                 </ControlHintTooltip>
                               }
                             >
-                              <WorkspaceTimelineTasksSection
-                                workspaceTabs={conversationWorkspaceTabs}
-                                activeWorkspacePath={workspacePath}
-                                activeWorkspaceIdentity={workspaceIdentity}
-                                activeTaskId={activeTaskId}
-                                taskSortBy={taskSortBy}
-                                groupByDate={false}
-                                // conversation backing workspace 只是内部执行路径；用户文案改成“任务”不改变 purpose 语义。
-                                taskRowVariant="default"
-                                emptyMessage={intl.formatMessage({
-                                  id: "workspaceSidebar.noConversations",
-                                })}
-                                onSelectTask={handleTaskRowSelect}
-                              />
+                              {usesDshSessions && onSelectDshSession ? (
+                                <DshSessionList
+                                  sessions={dshSessions ?? []}
+                                  selectedId={dshSelectedSessionId}
+                                  loading={dshSessionsLoading}
+                                  error={dshSessionsError}
+                                  onSelect={onSelectDshSession}
+                                />
+                              ) : (
+                                <WorkspaceTimelineTasksSection
+                                  workspaceTabs={conversationWorkspaceTabs}
+                                  activeWorkspacePath={workspacePath}
+                                  activeWorkspaceIdentity={workspaceIdentity}
+                                  activeTaskId={activeTaskId}
+                                  taskSortBy={taskSortBy}
+                                  groupByDate={false}
+                                  // conversation backing workspace 只是内部执行路径；用户文案改成“任务”不改变 purpose 语义。
+                                  taskRowVariant="default"
+                                  emptyMessage={intl.formatMessage({
+                                    id: "workspaceSidebar.noConversations",
+                                  })}
+                                  onSelectTask={handleTaskRowSelect}
+                                />
+                              )}
                             </WorkspacePurposeSection>
                           ),
                         )}

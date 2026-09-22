@@ -20,6 +20,7 @@ import type { WorkspaceHeaderVariant } from "@/WorkspaceHeaderSections/shared.js
 
 export function WorkspaceHeader({
   variant = "task",
+  draftTitle,
 
   draftDropTargetController,
   readOnlyReason,
@@ -64,6 +65,7 @@ export function WorkspaceHeader({
   reloadSessionPending,
 }: {
   variant?: WorkspaceHeaderVariant;
+  draftTitle?: string;
   draftDropTargetController?: ConversationDropTargetController | null;
   readOnlyReason?: string;
   workspaceAbsPath: string;
@@ -195,7 +197,12 @@ export function WorkspaceHeader({
             onRefreshGit={onRefreshGit}
           />
         ) : (
-          <div className="min-w-0 flex-1" aria-hidden="true" />
+          <div
+            className="min-w-0 flex-1 truncate px-2 text-ui-sm font-medium text-foreground-subtle"
+            title={draftTitle}
+          >
+            {draftTitle}
+          </div>
         )}
         <WorkspaceHeaderActionSection
           variant={variant}

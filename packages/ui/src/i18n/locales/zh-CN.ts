@@ -2058,6 +2058,7 @@ const zhCN: Record<string, string> = {
   "settings.previewBadge.light": "浅色",
   "settings.previewBadge.dark": "深色",
   "settings.modelProviderTitle": "模型设置",
+  "settings.dshLegacySectionNotice": "此页设置尚未接入当前 Dcode 的 DeepSeek Harness 任务，修改这里不会改变聊天执行。请以聊天区实际可用的能力为准。",
   "settings.mcpTitle": "MCP 服务器",
   "settings.mcp.description": "管理 Dcode Agent 使用的 MCP 服务器配置。",
   "settings.mcp.create.open": "新建 MCP 服务器",

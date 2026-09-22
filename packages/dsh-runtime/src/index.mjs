@@ -135,7 +135,9 @@ export class DshBackend extends EventEmitter {
       this.publish(sessionId, 'error', error.message);
     });
     this.followers.set(sessionId, dispose);
-    return await snapshot;
+    const frame = await snapshot;
+    const pending = [...this.pendingApprovals.entries()].find(([, request]) => request.agentId === sessionId);
+    return pending ? { ...frame, pendingApproval: { ...pending[1].request, requestId: pending[0] } } : frame;
     } catch (error) { dispose?.(); this.followers.delete(sessionId); throw error; }
     finally { clearTimeout(timeout); }
   }
