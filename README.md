@@ -57,3 +57,5 @@ DSH 运行时的本地夹具验收使用 `node packages/dsh-runtime/test/agent-e
 ## 开源与来源
 
 本仓库第一方改动遵循 [Apache-2.0](LICENSE)。保留了 ZCode 的原有声明与[原版 README](docs/upstream/ZCode-README.md)；移植的 DeepSeek Harness Desktop 生命周期代码遵循 BSD-3-Clause，具体来源、修订版本和许可证见 [vendor/PROVENANCE.md](packages/dsh-runtime/vendor/PROVENANCE.md) 与 [vendor/LICENSE](packages/dsh-runtime/vendor/LICENSE)。其他依赖和资源各自遵循原许可证，见 [NOTICE.DCode.md](NOTICE.DCode.md) 与 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。Dcode 图标源文件及桌面图标资源位于 [docs/assets](docs/assets) 和 [public/logo/icons](public/logo/icons)。
+
+项目认可 [LINUX DO 社区](https://linux.do) 倡导的真诚、友善与专业交流。这个友链表达 Dcode 对社区的认可，不代表社区为本项目背书。
