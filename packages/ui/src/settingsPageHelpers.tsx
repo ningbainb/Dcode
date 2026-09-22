@@ -576,43 +576,41 @@ export function GeneralSectionContent({
               }
             />
             {DCODE_UPSTREAM_SERVICES_ENABLED && (
-              <>
-                <SettingsRow
-                  label={intl.formatMessage({ id: "settings.receivePreviewUpdates" })}
-                  description={intl.formatMessage({
-                    id: "settings.receivePreviewUpdatesDescription",
-                  })}
-                  control={
-                    <Switch
-                      aria-label={intl.formatMessage({ id: "settings.receivePreviewUpdates" })}
-                      checked={receivePreviewUpdates}
-                      onCheckedChange={(checked) => {
-                        void onReceivePreviewUpdatesChange(checked);
-                      }}
-                    />
-                  }
-                />
-                <SettingsRow
-                  label={intl.formatMessage({
+              <SettingsRow
+                label={intl.formatMessage({ id: "settings.receivePreviewUpdates" })}
+                description={intl.formatMessage({
+                  id: "settings.receivePreviewUpdatesDescription",
+                })}
+                control={
+                  <Switch
+                    aria-label={intl.formatMessage({ id: "settings.receivePreviewUpdates" })}
+                    checked={receivePreviewUpdates}
+                    onCheckedChange={(checked) => {
+                      void onReceivePreviewUpdatesChange(checked);
+                    }}
+                  />
+                }
+              />
+            )}
+            <SettingsRow
+              label={intl.formatMessage({
+                id: "settings.autoDownloadAndInstallUpdates",
+              })}
+              description={intl.formatMessage({
+                id: "settings.autoDownloadAndInstallUpdatesDescription",
+              })}
+              control={
+                <Switch
+                  aria-label={intl.formatMessage({
                     id: "settings.autoDownloadAndInstallUpdates",
                   })}
-                  description={intl.formatMessage({
-                    id: "settings.autoDownloadAndInstallUpdatesDescription",
-                  })}
-                  control={
-                    <Switch
-                      aria-label={intl.formatMessage({
-                        id: "settings.autoDownloadAndInstallUpdates",
-                      })}
-                      checked={autoDownloadAndInstallUpdates}
-                      onCheckedChange={(checked) => {
-                        void onAutoDownloadAndInstallUpdatesChange(checked);
-                      }}
-                    />
-                  }
+                  checked={autoDownloadAndInstallUpdates}
+                  onCheckedChange={(checked) => {
+                    void onAutoDownloadAndInstallUpdatesChange(checked);
+                  }}
                 />
-              </>
-            )}
+              }
+            />
           </>
         ) : null}
         <SettingsRow

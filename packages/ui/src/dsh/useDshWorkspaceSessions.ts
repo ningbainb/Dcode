@@ -97,6 +97,8 @@ export function useDshWorkspaceSessions({
 
   useEffect(() => {
     if (!enabled || !dshService) return;
+    const imported = () => void refresh();
+    window.addEventListener("dcode:zcode-sessions-imported", imported);
     const subscription = dshService.onEvent((event) => {
       if (
         event.type === "event" &&
@@ -105,7 +107,10 @@ export function useDshWorkspaceSessions({
         void refresh();
       }
     });
-    return () => subscription.dispose();
+    return () => {
+      window.removeEventListener("dcode:zcode-sessions-imported", imported);
+      subscription.dispose();
+    };
   }, [dshService, enabled, refresh]);
 
   const selectSession = useCallback(

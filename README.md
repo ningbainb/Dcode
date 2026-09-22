@@ -15,6 +15,8 @@ Dcode 是基于 [ZCode](https://github.com/zai-org/ZCode) 改造的开源 AI Cod
 
 **ZCode 工作区与 DSH 执行链路相连。** DSH 负责模型、会话、消息流、工具调用和权限请求；Dcode 桌面界面负责项目选择、聊天展示以及原有文件、终端、Git/Diff 工作区。任务列表和聊天区共享 DSH 会话 ID，切换项目与重启后可恢复对应会话。[查看架构与当前边界](docs/DSH-INTEGRATION.md)。
 
+**继续接通日常工作流。** 模型设置使用 ZCode 风格的供应商列表和模型详情，但由 DSH 保存供应商、模型和密钥；首次启动或在设置中可导入旧 ZCode 会话。会话草稿、忙碌时追加消息、文件与工具批注，以及可选的 Agent 插件入口均沿用 DSH 会话边界。[模型设置](docs/DSH-MODEL-PROVIDER-SETTINGS.md) · [会话导入](docs/DSH-ZCODE-SESSION-IMPORT.md) · [工作流衔接](docs/DSH-ZCODE-WORKFLOW-BRIDGE.md)。
+
 > 本仓库是公开源码；云备份创建的是用户自己账号下的独立私有仓库。不要把私人项目或备份内容提交到本公开仓库。
 
 ## 当前支持范围
@@ -24,6 +26,7 @@ Dcode 是基于 [ZCode](https://github.com/zai-org/ZCode) 改造的开源 AI Cod
 | Windows 桌面端的 DSH 聊天、工具执行、停止与继续、历史会话 | 已接入并通过本地模型夹具测试                                     |
 | 文件编辑、终端、Git/Diff 与 DSH 任务联动                  | 已接入并通过打包版端到端测试                                     |
 | GitHub 私有快照云备份与副本恢复                           | Windows 桌面端可用；需 Git for Windows 与 Git Credential Manager |
+| GitHub Releases 自动检查与下载更新                        | Windows 安装版可用；下载后由用户确认重启安装                     |
 | macOS/Linux 云备份                                        | 暂未支持                                                         |
 | 旧 ZCode 的 MCP、技能、记忆、子智能体等设置驱动 DSH       | 尚未逐项贯通，不作为当前已支持功能宣传                           |
 
@@ -39,9 +42,9 @@ pnpm bootstrap
 pnpm dev:desktop
 ```
 
-`bootstrap` 会准备依赖及桌面运行资源，首次执行可能需要下载额外组件。在 Windows 上执行 `pnpm build:desktop` 后，可用 `pnpm pack:dcode` 生成 ZIP 打包产物；当前仓库暂未提供已签名的正式安装包。
+`bootstrap` 会准备依赖及桌面运行资源，首次执行可能需要下载额外组件。在 Windows 上执行 `pnpm build:desktop` 后，可用 `pnpm pack:dcode` 生成 NSIS 安装包、`latest.yml` 和 blockmap；用 `pnpm verify:dcode-release` 核对元数据与安装包。当前安装包未签名。
 
-可在 [GitHub Releases 下载 v0.2.1 Windows x64 测试安装包](https://github.com/ningbainb/Dcode/releases/tag/v0.2.1)。这是未签名构建；安装及真实账号的在线链路尚待验收，使用前请阅读[发行说明与 SHA-256](docs/releases/v0.2.1.md)。
+可在 [GitHub Releases 下载 v0.2.2 Windows x64 测试安装包](https://github.com/ningbainb/Dcode/releases/tag/v0.2.2)。v0.2.1 用户需先手动安装 v0.2.2，之后的正式版本可在应用内检查更新。安装及真实账号的在线链路尚待验收，使用前请阅读[发行说明与 SHA-256](docs/releases/v0.2.2.md)。
 
 ## 验证与贡献
 

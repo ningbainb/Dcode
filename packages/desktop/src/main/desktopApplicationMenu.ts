@@ -351,7 +351,6 @@ function buildApplicationMenuTemplate(options: {
   ];
   const removed = new Set(
     [
-      desktopMenuMessageIds.helpCheckForUpdates,
       desktopMenuMessageIds.helpWhatsNew,
       desktopMenuMessageIds.helpFeedback,
       desktopMenuMessageIds.helpZCodeEndpoint,

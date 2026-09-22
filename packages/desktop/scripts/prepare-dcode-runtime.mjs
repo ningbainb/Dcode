@@ -5,18 +5,18 @@ import { resolve } from 'node:path';
 
 const desktop = resolve(import.meta.dirname, '..');
 const root = resolve(desktop, '../..');
-const target = resolve(desktop, 'dcode-runtime-v1');
+const target = resolve(desktop, 'dcode-runtime-v2');
 const readyMarker = resolve(target, '.dcode-deploy-ready');
 if (!existsSync(readyMarker)) {
   await new Promise((resolveRun, reject) => {
     const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-    const child = spawn(command, ['--config.inject-workspace-packages=true', '--filter', '@dcode/dsh-runtime', 'deploy', '--prod', 'packages/desktop/dcode-runtime-v1'], {
+    const child = spawn(command, ['--config.inject-workspace-packages=true', '--filter', '@dcode/dsh-runtime', 'deploy', '--prod', 'packages/desktop/dcode-runtime-v2'], {
       cwd: root, env: process.env, stdio: 'inherit', shell: process.platform === 'win32', windowsHide: true,
     });
     child.on('error', reject);
     child.on('exit', code => code === 0 ? resolveRun() : reject(new Error(`Runtime deploy exited ${code}`)));
   });
-  await writeFile(readyMarker, '0.1.0\n');
+  await writeFile(readyMarker, 'agent-plugins-runtime-v2\n');
 }
 for (const directory of ['src', 'vendor']) {
   await cp(resolve(root, 'packages/dsh-runtime', directory), resolve(target, directory), { recursive: true });

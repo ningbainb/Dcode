@@ -60,6 +60,7 @@ let autoUpdaterSettingService: SettingServiceLike | undefined;
 // （占位 feed、autoDownload 默认值）。任何漏改成按身份判断的入口若仍调用手动检查，
 // 都会对占位 feed 发真实请求。这里记住“本 flavor 已禁用”，让手动检查在模块内部 fail-closed。
 let autoUpdaterDisabledForProductFlavor = false;
+let githubStableOnly = false;
 
 type SettingServiceLike = Pick<ISettingService, "get" | "update">;
 
@@ -110,6 +111,7 @@ let forceAutoUpdateLastLoggedProgressBucket: number | null = null;
 
 interface InitAutoUpdaterOptions {
   enabled?: boolean;
+  githubReleaseRepository?: { owner: string; repo: string };
   onBeforeQuitAndInstall?: () => void | Promise<void>;
   settingService?: SettingServiceLike;
   locale?: Locale;
@@ -717,6 +719,9 @@ export function resolveUpdateFeedSourceFromStartupConfig(
 async function resolveUpdateReleaseChannel(
   settingService: SettingServiceLike | undefined,
 ): Promise<ElectronReleaseChannel> {
+  if (githubStableOnly) {
+    return "stable";
+  }
   if (!settingService) {
     return "stable";
   }
@@ -772,6 +777,19 @@ function applyManifestUpdateProvider(options: InitAutoUpdaterOptions): void {
       ? `[auto-update] service manifest provider applied platform=${getElectronReleasePlatform()} manifestUrl=${redactUpdateFeedUrlForLog(manifestUrl)}`
       : `[auto-update] service manifest provider applied platform=${getElectronReleasePlatform()}`,
   );
+}
+
+function applyUpdateProvider(options: InitAutoUpdaterOptions): void {
+  if (options.githubReleaseRepository) {
+    const { owner, repo } = options.githubReleaseRepository;
+    // Dcode 的发行物由 GitHub Releases 承载。GitHub provider 读取 latest.yml 并由
+    // electron-updater 校验 SHA-512；不能继续向上游 ZCode manifest 查询更新。
+    autoUpdater.allowPrerelease = false;
+    autoUpdater.setFeedURL({ provider: "github", owner, repo });
+    logger.info(`[auto-update] GitHub release provider applied ${owner}/${repo}`);
+    return;
+  }
+  applyManifestUpdateProvider(options);
 }
 
 function pickFallbackReleaseNotesMarkdown(
@@ -1353,6 +1371,9 @@ export function refreshAutoUpdaterReleaseChannel(
   receivePreviewUpdates: boolean,
   reason = "settings receivePreviewUpdates changed",
 ) {
+  if (githubStableOnly) {
+    return;
+  }
   const nextChannel: ElectronReleaseChannel = receivePreviewUpdates ? "preview" : "stable";
 
   if (!canUseAutoUpdaterInCurrentRuntime()) {
@@ -1470,6 +1491,7 @@ export async function initAutoUpdater(options: InitAutoUpdaterOptions = {}): Pro
     return;
   }
   autoUpdaterDisabledForProductFlavor = false;
+  githubStableOnly = Boolean(options.githubReleaseRepository);
   if (!canUseAutoUpdaterInCurrentRuntime()) return;
 
   onBeforeQuitAndInstall = options.onBeforeQuitAndInstall;
@@ -1504,7 +1526,7 @@ export async function initAutoUpdater(options: InitAutoUpdaterOptions = {}): Pro
   // 这里仅在 Windows 关闭“退出即自动安装”，要求用户显式点更新；其他平台保持原有行为，避免改动既有升级链路。
   autoUpdater.autoInstallOnAppQuit = process.platform !== "win32";
   autoUpdater.logger = logger;
-  applyManifestUpdateProvider(options);
+  applyUpdateProvider(options);
 
   const triggerCheckForUpdates = (reason: string) => {
     if (checkForUpdatesInFlight) {

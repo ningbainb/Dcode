@@ -284,6 +284,10 @@ export interface AppSettings {
   closeToTrayOnWindowsMigrationInitialized?: boolean;
   /** 桌面端全局页面缩放档位；用于重启后恢复界面缩放，Web/手机端忽略。 */
   desktopZoomLevel?: number;
+  /** DCode 会话消息阅读字号；不影响编辑器、终端、输入框与界面缩放。 */
+  dcodeChatFontSize?: number | null;
+  /** DCode 会话消息阅读字体。 */
+  dcodeChatFontFamily?: "default" | "system" | "mono";
   /** 桌面主窗口最近一次非最大化宽高及最大化状态；Web/手机端忽略。 */
   desktopWindowSize?: {
     width: number;

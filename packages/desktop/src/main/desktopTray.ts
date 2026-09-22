@@ -5,7 +5,6 @@ import {
   desktopMenuMessageIds,
   getDesktopMenuMessage,
   ZCODE_PRODUCT_FLAVOR,
-  DCODE_UPSTREAM_SERVICES_ENABLED,
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
@@ -73,8 +72,8 @@ export function createWindowsDesktopTray(options: {
           click: () => executeTrayCommand(DesktopCommandIds.OpenWorkspace),
         },
         { type: "separator" },
-        // 更新入口跟随产品身份：Preview（含生产后端的 Preview）禁用更新器，托盘也不能露出入口。
-        ...(DCODE_UPSTREAM_SERVICES_ENABLED && ZCODE_PRODUCT_FLAVOR === "production"
+        // Dcode 正式版使用自己的 GitHub 更新源；托盘与主菜单提供相同的检查入口。
+        ...(ZCODE_PRODUCT_FLAVOR === "production"
           ? [
               {
                 label: getLabel(desktopMenuMessageIds.helpCheckForUpdates),

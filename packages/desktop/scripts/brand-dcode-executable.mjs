@@ -13,13 +13,15 @@ export async function brandDcodeExecutable(executablePath) {
   const executable = NtExecutable.from(await readFile(executablePath));
   const resources = NtExecutableResource.from(executable);
   const icon = Data.IconFile.from(await readFile(resolve(import.meta.dirname, '../build/icon.ico')));
+  const appVersion = JSON.parse(await readFile(resolve(import.meta.dirname, '../../../package.json'), 'utf8')).version;
+  const windowsVersion = `${appVersion}.0`.split('.').map(part => Number.parseInt(part, 10) || 0).slice(0, 4).join('.');
   const groups = resources.entries.filter(entry => entry.type === 14);
   for (const group of groups) Resource.IconGroupEntry.replaceIconsForResource(
     resources.entries, group.id, group.lang, icon.icons.map(item => item.data),
   );
   for (const version of Resource.VersionInfo.fromEntries(resources.entries)) {
-    version.setFileVersion(0, 1, 1, 0);
-    version.setProductVersion(0, 1, 1, 0);
+    version.setFileVersion(...windowsVersion.split('.').map(Number));
+    version.setProductVersion(...windowsVersion.split('.').map(Number));
     for (const language of version.getAllLanguagesForStringValues()) version.setStringValues(language, {
       FileDescription: 'Dcode AI Coding Workspace', ProductName: 'Dcode', CompanyName: 'Dcode',
       InternalName: 'Dcode', OriginalFilename: 'Dcode.exe',

@@ -1,6 +1,6 @@
 {
   "name": "dcode",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -11,6 +11,7 @@
     "test:cloud-backup": "node scripts/test-cloud-backup.mjs",
     "test:cloud-backup:ui": "node packages/desktop/scripts/cloud-backup-ui-smoke.mjs",
     "pack:dcode": "pnpm --filter @zcode/desktop pack:dcode",
+    "verify:dcode-release": "node scripts/verify-dcode-release.mjs",
     "prepare:dcode-runtime": "node packages/desktop/scripts/prepare-dcode-runtime.mjs",
     "build:dcode": "node scripts/build-desktop-agent-cli.mjs && pnpm build:bootstrap && pnpm --filter @zcode/desktop prepare:native-search",
     "dev:web": "concurrently -k -n server,web -c blue,green \"pnpm --filter @zcode/server dev\" \"pnpm --filter @zcode/web dev\"",

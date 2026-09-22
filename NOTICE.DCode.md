@@ -9,3 +9,10 @@ licensed under BSD-3-Clause. Its complete license and exact revision are include
 
 DeepSeek Harness official NPM packages retain their individual upstream licenses.
 The DCode integration and branding additions are provided under Apache-2.0.
+
+Optional Agent browser automation uses Microsoft Playwright MCP (`@playwright/mcp`,
+Apache-2.0), packaged with the Dcode DSH runtime. Optional Windows desktop
+automation installs `windows-gui-mcp` (MIT), which uses pywinauto (BSD-3-Clause),
+in a Dcode-specific Python virtual environment only after the user chooses
+Install. Upstream projects and their licenses are linked in
+`docs/DSH-AGENT-PLUGINS.md`.

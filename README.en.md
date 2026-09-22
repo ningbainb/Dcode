@@ -21,6 +21,8 @@ The public Dcode source repository is separate from each user's private backup r
 
 DSH owns model execution, sessions, transcripts, streamed tool events, and approvals. The Dcode desktop projects that state into a ZCode-based workspace with the existing file, terminal, and Git/Diff surfaces. The sidebar and chat share DSH session selection across project changes and restarts. See the [integration notes](docs/DSH-INTEGRATION.md) for the boundary and current limitations. Legacy ZCode settings for MCP, skills, memory, subagents, and hooks have not all been verified end to end against DSH.
 
+The model settings retain ZCode's provider-list layout while DSH saves providers, models, and credentials. Dcode can import legacy ZCode sessions on first launch or from Settings. Session drafts, queued follow-ups, conversation annotations, and optional agent plugins use the DSH session boundary. See the [provider settings](docs/DSH-MODEL-PROVIDER-SETTINGS.md), [session import](docs/DSH-ZCODE-SESSION-IMPORT.md), and [workflow bridge](docs/DSH-ZCODE-WORKFLOW-BRIDGE.md).
+
 ## Build and verify
 
 Use Git, Node.js 24.14.0, and pnpm 10.33.2 as pinned in [mise.toml](mise.toml). From the repository root:
@@ -31,9 +33,9 @@ pnpm bootstrap
 pnpm dev:desktop
 ```
 
-For validation, run `pnpm typecheck`, `pnpm lint`, `pnpm test:dcode`, and `pnpm test:cloud-backup`. The DSH fixture test at `packages/dsh-runtime/test/agent-e2e.mjs` uses a synthetic local model, not a live provider account. On Windows, `pnpm build:desktop` followed by `pnpm pack:dcode` produces a ZIP package. This repository does not yet provide a signed installer release.
+For validation, run `pnpm typecheck`, `pnpm lint`, `pnpm test:dcode`, and `pnpm test:cloud-backup`. The DSH fixture test at `packages/dsh-runtime/test/agent-e2e.mjs` uses a synthetic local model, not a live provider account. On Windows, `pnpm build:desktop` followed by `pnpm pack:dcode` produces an NSIS installer, `latest.yml`, and a blockmap; `pnpm verify:dcode-release` checks that they match. The installer is unsigned.
 
-The [v0.2.1 Windows x64 test installer](https://github.com/ningbainb/Dcode/releases/tag/v0.2.1) is unsigned. Installation and live model/GitHub account flows have not yet been verified. Read the [release notes and SHA-256](docs/releases/v0.2.1.md) before using it.
+The [v0.2.2 Windows x64 test installer](https://github.com/ningbainb/Dcode/releases/tag/v0.2.2) checks GitHub Releases for later updates and lets users download them before confirming restart and installation. v0.2.1 users must install v0.2.2 manually once. Installation and live model/GitHub account flows have not yet been verified. Read the [release notes and SHA-256](docs/releases/v0.2.2.md) before using it.
 
 ## License and credits
 

@@ -72,3 +72,5 @@ packages/desktop/.e2e-network-capture/
 # DCode generated standalone runtime
 packages/desktop/dcode-runtime/
 packages/desktop/dcode-runtime-v1/
+packages/desktop/dcode-runtime-v2/
+artifacts/

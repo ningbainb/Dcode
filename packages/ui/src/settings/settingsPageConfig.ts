@@ -19,6 +19,7 @@ import {
   WandSparkles,
   Keyboard,
   FileSearch,
+  Import,
 } from "lucide-react";
 import { isSettingsSectionEnabled, type SettingsSectionId } from "@/lib/settingsNavigation.js";
 import type { Theme } from "@/useTheme.js";
@@ -57,6 +58,7 @@ const BASE_SETTINGS_SECTION_GROUPS: Array<{
 
 const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
   { id: "cloudBackup", icon: CloudUpload, titleId: "settings.cloudBackup.title", groupId: "dataAndStats" },
+  { id: "zcodeImport", icon: Import, titleId: "settings.zcodeImport.title", groupId: "dataAndStats" },
   {
     id: "general",
     icon: Settings2,
@@ -163,7 +165,7 @@ const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
 // 兼容既有只读消费者：默认配置代表不带桌面平台能力的 Web 视图；
 // macOS/Windows/Linux 必须继续通过 createSettingsPageConfig 动态加入 Computer Use。
 export const SETTINGS_SECTIONS = BASE_SETTINGS_SECTIONS.filter(
-  (section) => section.id !== "computerUse" && section.id !== "cloudBackup" && isSettingsSectionEnabled(section.id),
+  (section) => section.id !== "computerUse" && section.id !== "cloudBackup" && section.id !== "zcodeImport" && isSettingsSectionEnabled(section.id),
 );
 
 interface SettingsPageConfigOptions {
@@ -180,7 +182,10 @@ export function createSettingsPageConfig({
   const showComputerUse = isDesktop || isMacDesktop || isWindowsDesktop;
   const settingsSections = BASE_SETTINGS_SECTIONS.filter((section) => {
     if (section.id === "cloudBackup" && !isWindowsDesktop) return false;
+    if (section.id === "zcodeImport" && !isDesktop) return false;
     if (section.id === "computerUse" && !showComputerUse) return false;
+    // Dcode Desktop 的浏览器/电脑控制由 DSH 插件入口统一管理，旧 Agent 浏览器开关不能控制 DSH。
+    if (section.id === "browser" && isDesktop) return false;
     return isSettingsSectionEnabled(section.id);
   });
   const settingsSectionGroups = BASE_SETTINGS_SECTION_GROUPS.map((group) => ({

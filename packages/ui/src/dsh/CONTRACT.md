@@ -3,6 +3,8 @@
 The DSH backend owns accepted sessions, messages, model execution and approvals. Desktop UI
 keeps only the current workspace's selected session ID and a read-only session list. A DSH
 session ID must not be passed to the legacy ZCode task service or stored as its task ID.
+Imported ZCode archives are DCode-owned, read-only records with a distinct ID prefix in
+that sidebar; they are not DSH sessions. See `docs/DSH-ZCODE-SESSION-IMPORT.md`.
 
 Workspace identity keys selection, with the path as a fallback. Changing projects must not
 apply a late session-list response to the new project. The sidebar and chat read the same
@@ -18,3 +20,11 @@ retain their existing owners.
 Acceptance: create two sessions from the sidebar, switch between them and projects, send
 in each, restart the app, restore the chosen session, and verify no cross-session messages
 or approvals. Existing desktop file/tool/terminal and GitHub backup behavior still works.
+
+The UI owns only unsent composer drafts, keyed by workspace path and DSH session ID;
+it never persists accepted prompts or a second queue. During an active turn,
+follow-up sends use DSH's existing queued `sendMessage` admission. Stop and
+composer Escape call the same DSH cancellation command. The sidebar filters
+DSH-owned sessions locally by displayed title. Completed messages reuse
+ZCode's copy action. See `docs/DSH-ZCODE-WORKFLOW-BRIDGE.md` for failure and
+stale-response rules.

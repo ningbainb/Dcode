@@ -1336,36 +1336,40 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
                 }
               />
             ) : null} */}
-            {!usesDshSessions && <Button
-              variant="ghost"
-              onClick={handleOpenAutomationsMain}
-              data-icon="inline-start"
-              data-testid={TID_AUTOMATIONS_OPEN}
-              size="lg"
-              aria-pressed={automationsActive}
-              className={cn(
-                "w-full justify-start gap-2 text-foreground hover:bg-surface-hover hover:text-foreground",
-                automationsActive && "bg-selected text-foreground",
-              )}
-            >
-              <CalendarClock className="size-4" />
-              {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
-            </Button>}
-            {!usesDshSessions && <Button
-              variant="ghost"
-              onClick={handleOpenPluginStoreMain}
-              data-icon="inline-start"
-              data-testid="plugin-store-sidebar-open"
-              size="lg"
-              aria-pressed={pluginStoreActive}
-              className={cn(
-                "w-full justify-start gap-2 text-foreground hover:bg-surface-hover hover:text-foreground",
-                pluginStoreActive && "bg-selected text-foreground",
-              )}
-            >
-              <Blocks className="size-4" />
-              {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
-            </Button>}
+            {!usesDshSessions && (
+              <Button
+                variant="ghost"
+                onClick={handleOpenAutomationsMain}
+                data-icon="inline-start"
+                data-testid={TID_AUTOMATIONS_OPEN}
+                size="lg"
+                aria-pressed={automationsActive}
+                className={cn(
+                  "w-full justify-start gap-2 text-foreground hover:bg-surface-hover hover:text-foreground",
+                  automationsActive && "bg-selected text-foreground",
+                )}
+              >
+                <CalendarClock className="size-4" />
+                {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
+              </Button>
+            )}
+            {!usesDshSessions && (
+              <Button
+                variant="ghost"
+                onClick={handleOpenPluginStoreMain}
+                data-icon="inline-start"
+                data-testid="plugin-store-sidebar-open"
+                size="lg"
+                aria-pressed={pluginStoreActive}
+                className={cn(
+                  "w-full justify-start gap-2 text-foreground hover:bg-surface-hover hover:text-foreground",
+                  pluginStoreActive && "bg-selected text-foreground",
+                )}
+              >
+                <Blocks className="size-4" />
+                {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
+              </Button>
+            )}
           </div>
 
           <div className="relative flex min-h-0 flex-1 flex-col">
@@ -1640,6 +1644,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
                             >
                               {usesDshSessions && onSelectDshSession ? (
                                 <DshSessionList
+                                  key={workspaceIdentity?.trim() || workspacePath}
                                   sessions={dshSessions ?? []}
                                   selectedId={dshSelectedSessionId}
                                   loading={dshSessionsLoading}

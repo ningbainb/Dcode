@@ -1,0 +1,9 @@
+.dsh-chat-copy {
+  font-size: var(--dsh-chat-font-size, inherit);
+  font-family: var(--dsh-chat-font-family, inherit);
+}
+
+.dsh-chat-copy .dsh-chat-response {
+  font-size: var(--dsh-chat-font-size, inherit);
+  font-family: var(--dsh-chat-font-family, inherit);
+}

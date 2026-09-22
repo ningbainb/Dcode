@@ -793,9 +793,15 @@ importers:
       '@deepseek-ai/dsh-base':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(c9bfbdfcb190b50ffeaac9a1fd4a7243)
+      '@deepseek-ai/dsh-mcp-client':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(97553d3a951f1aa4b29be31443ffd803)
       '@deepseek-ai/dsh-web-app':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(944bc069f83fa41ec8ce7805b8c03c7e)
+      '@playwright/mcp':
+        specifier: 0.0.82
+        version: 0.0.82
       ws:
         specifier: 8.20.0
         version: 8.20.0
@@ -6253,6 +6259,11 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@playwright/mcp@0.0.82':
+    resolution: {integrity: sha512-OCqftfb8H4dnqm/njbTBRk3seUvUPttOlJUxCtEzXGETYOlRH5Qt3bbXIjmZIuWAxD9RF+yg1ASrPeXvm0y5cA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@preact/signals-core@1.14.1':
     resolution: {integrity: sha512-vxPpfXqrwUe9lpjqfYNjAF/0RF/eFGeLgdJzdmIIZjpOnTmGmAB4BjWone562mJGMRP4frU6iZ6ei3PDsu52Ng==}
 
@@ -11253,6 +11264,16 @@ packages:
   playwright-core@1.59.1:
     resolution: {integrity: sha512-HBV/RJg81z5BiiZ9yPzIiClYV/QMsDCKUyogwH9p3MCP6IYjUFu/MActgYAvK0oWyV9NlwM3GLBjADyWgydVyg==}
     engines: {node: '>=18'}
+    hasBin: true
+
+  playwright-core@1.64.0-alpha-1789764292000:
+    resolution: {integrity: sha512-ZgRaybFv4rRy7QMGnYprEGFdNJnvapNqcaER2w96bDQA+40BWIle1el1Yh9KHD3E6XYmieMB+r+UxFTCauTGGQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.64.0-alpha-1789764292000:
+    resolution: {integrity: sha512-3Ngs4ERGdC912uW3srEDtNVey4u1wSaQ/EFcKhxMpz0by0K6nidaJgM087pLpJc1osytiVnL7ack5gvgPArPNw==}
+    engines: {node: '>=20'}
     hasBin: true
 
   plist@3.1.0:
@@ -18383,6 +18404,11 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@playwright/mcp@0.0.82':
+    dependencies:
+      playwright: 1.64.0-alpha-1789764292000
+      playwright-core: 1.64.0-alpha-1789764292000
+
   '@preact/signals-core@1.14.1': {}
 
   '@protobufjs/aspromise@1.1.2': {}
@@ -24064,6 +24090,12 @@ snapshots:
       pathe: 2.0.3
 
   playwright-core@1.59.1: {}
+
+  playwright-core@1.64.0-alpha-1789764292000: {}
+
+  playwright@1.64.0-alpha-1789764292000:
+    dependencies:
+      playwright-core: 1.64.0-alpha-1789764292000
 
   plist@3.1.0:
     dependencies:

@@ -91,7 +91,6 @@ import {
   initAutoUpdater,
   onAutoUpdaterStateChanged,
   refreshAutoUpdaterReleaseChannel,
-  resolveUpdateFeedSourceFromStartupConfig,
   syncAutoUpdaterStateToWindow,
   syncPostUpdateReleaseNotesToWindow,
   syncReadyUpdateToWindow,
@@ -1936,12 +1935,9 @@ app.whenReady().then(async () => {
 
   logWindowsBundledRuntimeIntegrityDiagnostic();
 
-  // 启动自动更新检查（后台执行，不阻塞主界面）
-  // Preview 身份无论连接哪个后端都不自动更新：stable feed 上只分发正式 ZCode 安装包，
-  // 不向 Preview 渠道提供更新。
+  // Dcode 的安装版只从自己的 GitHub Releases 检查更新，复用现有状态机与安装确认流程。
   void initAutoUpdater({
-    // DCode 没有自己的更新源，不能安装上游 ZCode 的更新覆盖本产品。
-    enabled: false,
+    githubReleaseRepository: { owner: "ningbainb", repo: "Dcode" },
     onBeforeQuitAndInstall: async () => {
       notifyStabilityLifecycle("update_install");
       await prepareAppQuit("auto-update quitAndInstall", "update-install");
@@ -1953,10 +1949,6 @@ app.whenReady().then(async () => {
     locale: currentApplicationLocale,
     deviceMid,
     resolveEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
-    updateFeedSource: resolveUpdateFeedSourceFromStartupConfig({
-      argv: process.argv,
-      env: process.env,
-    }),
   });
 
   if (process.platform === "darwin" || process.platform === "win32") {
@@ -2177,7 +2169,7 @@ app.whenReady().then(async () => {
   registerDesktopNetworkTelemetry(logger);
 
   // DCode 使用独立版本号，不能被 ZCode 的最低版本策略阻止启动或替换安装。
-  logger.info("[force-update] Dcode v0.1 has no update feed; upstream gate disabled");
+  logger.info("[force-update] upstream minimum-version gate disabled; Dcode uses GitHub Releases");
 
   logger.info("[startup] 创建主窗口");
   await primaryWindowCoordinator.ensurePrimaryWindow("app-ready");

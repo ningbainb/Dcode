@@ -47,6 +47,8 @@ try {
     cwd: workspaceRoot, timeout: 120000,
     env: { ...inheritedEnv,
       DCODE_DATA_DIR: data, DCODE_NODE_PATH: process.env.DCODE_TEST_EXECUTABLE ? '' : join(workspaceRoot, '.tools/node_modules/node-win-x64/bin/node.exe'),
+      // 首次安装的会话导入会扫描 os.homedir()；烟测必须隔离真实用户的 ZCode 历史。
+      USERPROFILE: join(data, 'home'), HOME: join(data, 'home'),
       ZCODE_DATA_BASE_DIR: data, ZCODE_DESKTOP_HOME_DIR: join(data, 'home'),
       ZCODE_DESKTOP_USER_DATA_DIR: join(data, 'electron'),
       ZCODE_DESKTOP_SESSION_DATA_DIR: join(data, 'electron/session'),
@@ -75,13 +77,16 @@ try {
   await page.keyboard.press('Control+,');
   await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
   const modelSettings = page.getByTestId('dsh-model-settings');
-  await modelSettings.getByLabel('Provider ID', { exact: true }).fill('desktop-ui-fixture');
-  await modelSettings.getByLabel('Base URL', { exact: true }).fill(`http://127.0.0.1:${server.address().port}/v1`);
-  await modelSettings.getByLabel('Model ID', { exact: true }).fill('dcode-fixture');
-  await modelSettings.getByLabel('API Key', { exact: true }).fill('synthetic-local-test-key');
-  await modelSettings.getByRole('button', { name: 'Save to DSH', exact: true }).click();
-  await modelSettings.getByText('Saved to DeepSeek Harness.', { exact: true }).waitFor({ timeout: 30000 });
-  assert.equal(await modelSettings.getByLabel('API Key', { exact: true }).inputValue(), '');
+  await modelSettings.getByRole('button', { name: /^(Add provider|添加供应商)$/ }).click();
+  await modelSettings.getByRole('button', { name: /^(Custom provider|自定义供应商)$/ }).click();
+  await modelSettings.getByLabel(/^(Display name|显示名称)$/).first().fill('DCode UI Fixture');
+  await modelSettings.getByLabel(/^(Provider ID|供应商 ID)$/).fill('desktop-ui-fixture');
+  await modelSettings.getByLabel(/^(Base URL|接口地址)$/).fill(`http://127.0.0.1:${server.address().port}/v1`);
+  await modelSettings.getByLabel(/^(Model ID|模型 ID)$/).fill('dcode-fixture');
+  await modelSettings.getByTestId('model-provider-api-key-input').fill('synthetic-local-test-key');
+  await modelSettings.getByRole('button', { name: /^(Save to DSH|保存到 DSH)$/ }).click();
+  await modelSettings.getByText(/已保存到 DSH|Saved to DSH/).waitFor({ timeout: 30000 });
+  assert.equal(await modelSettings.getByTestId('model-provider-api-key-input').inputValue(), '');
   await page.getByTestId('settings-back-button').click();
   await modelSettings.waitFor({ state: 'hidden' });
   await chat.getByTestId('dsh-model-select').selectOption('desktop-ui-fixture/dcode-fixture');
@@ -141,9 +146,9 @@ try {
   assert.equal(await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id'), savedSession);
   await page.keyboard.press('Control+,');
   await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
-  await page.getByText('Runtime diagnostics', { exact: true }).click();
-  await page.getByRole('button', { name: 'Restart Runtime', exact: true }).click();
-  await page.getByText('Runtime restarted.', { exact: true }).waitFor({ timeout: 120000 });
+  await page.getByText(/^(Runtime diagnostics|运行时诊断)$/).click();
+  await page.getByRole('button', { name: /^(Restart Runtime|重启运行时)$/ }).click();
+  await page.getByText(/^(Runtime restarted\.|运行时已重启。)$/).waitFor({ timeout: 120000 });
   await page.getByTestId('settings-back-button').click();
   await page.getByTestId('dsh-model-settings').waitFor({ state: 'hidden' });
   assert.ok((await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SHELL_OK'));
@@ -194,11 +199,14 @@ try {
   }
   await capture(page, '04-terminal.png');
   await page.keyboard.press('Control+,');
+  await page.getByRole('button', { name: /^(General|常规)$/ }).click();
+  await page.getByRole('switch', { name: /^(Automatically download and install updates|自动下载并安装更新)$/ }).waitFor();
   await page.getByRole('button', { name: /^(Cloud backup|云备份)$/ }).click();
   await page.getByRole('button', { name: /^(Sign in with browser|浏览器登录)$/ }).waitFor();
   assert.equal(await page.getByRole('switch').isChecked(), false);
   await capture(page, '05-cloud-backup-settings.png');
-  assert.doesNotMatch(await page.locator('body').innerText(), /zcode/i);
+  // “导入 ZCode 会话”需要保留来源名称；这里检查旧产品的外部入口没有回流。
+  assert.doesNotMatch(await page.locator('body').innerText(), /zcode\.z\.ai|zcode\.zhipuai\.cn/i);
   await page.keyboard.press('Escape');
   await page.locator('[data-testid="workspace-help-menu-trigger"]:visible').last().click();
   const menuText = await page.getByRole('menu').innerText();
@@ -208,7 +216,8 @@ try {
     const flatten = items => items.flatMap(item => [item.label, ...(item.submenu ? flatten(item.submenu.items) : [])]);
     return flatten(Menu.getApplicationMenu()?.items ?? []).join('\n');
   });
-  assert.doesNotMatch(nativeLabels, /zcode|feedback|community|check for updates|what.s new|反馈|社区|检查更新|更新日志/i);
+  assert.doesNotMatch(nativeLabels, /zcode|feedback|community|what.s new|反馈|社区|更新日志/i);
+  assert.match(nativeLabels, /check for updates|检查更新/i);
   const aboutWindowPromise = app.waitForEvent('window');
   await page.getByRole('menuitem', { name: /About|关于/ }).click();
   const about = await aboutWindowPromise;

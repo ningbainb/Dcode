@@ -56,6 +56,9 @@ import {
 import { buildUsageEntitlementCacheKey } from "@/lib/usageEntitlementCache.js";
 import { ModelProviderSection } from "@/settings/ModelProviderSection.js";
 import { DshSettings } from "@/dsh/DshSettings.js";
+import { DshChatFontSettings } from "@/dsh/DshChatFontSettings.js";
+import { DshAgentPluginsSection } from "@/dsh/DshAgentPluginsSection.js";
+import { ZcodeSessionImportSection } from "@/dsh/ZcodeSessionImportSection.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
 import { UsageStatsSection, type UsageStatsSectionTab } from "@/settings/UsageStatsSection.js";
@@ -668,14 +671,24 @@ export function SettingsPage({
   // until the legacy capability pages are connected to the DSH runtime.
   const visibleSettingsSectionGroups = useMemo(() => {
     if (!usesDshRuntimeSettings) return settingsSectionGroups;
-    const relevant = new Set(["general", "appearance", "modelProvider", "shortcuts", "cloudBackup"]);
-    return settingsSectionGroups.map(group => ({
-      ...group,
-      sections: group.sections.filter(section => relevant.has(section.id)),
-    })).filter(group => group.sections.length > 0);
+    const relevant = new Set([
+      "general",
+      "appearance",
+      "modelProvider",
+      "plugin",
+      "shortcuts",
+      "cloudBackup",
+      "zcodeImport",
+    ]);
+    return settingsSectionGroups
+      .map((group) => ({
+        ...group,
+        sections: group.sections.filter((section) => relevant.has(section.id)),
+      }))
+      .filter((group) => group.sections.length > 0);
   }, [settingsSectionGroups, usesDshRuntimeSettings]);
   const visibleSettingsSections = useMemo(
-    () => visibleSettingsSectionGroups.flatMap(group => group.sections),
+    () => visibleSettingsSectionGroups.flatMap((group) => group.sections),
     [visibleSettingsSectionGroups],
   );
   const selectDirectory = useSelectDirectory();
@@ -1823,28 +1836,31 @@ export function SettingsPage({
                             }
                           />
                         ) : activeSection === "appearance" ? (
-                          <AppearanceSectionContent
-                            codePreviewSettings={codePreviewSettings}
-                            setCodePreviewSettings={handleCodePreviewSettingsChange}
-                            theme={theme}
-                            setTheme={(nextTheme) => handleFooterThemeChange(nextTheme)}
-                            uiFontSizePx={uiFontSizePx}
-                            setUiFontSizePx={(fontSizePx) =>
-                              runUserAction({
-                                input: {
-                                  featureId: "settings.appearance",
-                                  action: "change_ui_font_size",
-                                  trigger: "keyboard",
-                                },
-                                operation: () => setUiFontSizePx(fontSizePx),
-                                completed: {
-                                  resultSource: "local_commit",
-                                  valueAfter: String(fontSizePx),
-                                },
-                                failureStage: "local_commit",
-                              })
-                            }
-                          />
+                          <>
+                            <AppearanceSectionContent
+                              codePreviewSettings={codePreviewSettings}
+                              setCodePreviewSettings={handleCodePreviewSettingsChange}
+                              theme={theme}
+                              setTheme={(nextTheme) => handleFooterThemeChange(nextTheme)}
+                              uiFontSizePx={uiFontSizePx}
+                              setUiFontSizePx={(fontSizePx) =>
+                                runUserAction({
+                                  input: {
+                                    featureId: "settings.appearance",
+                                    action: "change_ui_font_size",
+                                    trigger: "keyboard",
+                                  },
+                                  operation: () => setUiFontSizePx(fontSizePx),
+                                  completed: {
+                                    resultSource: "local_commit",
+                                    valueAfter: String(fontSizePx),
+                                  },
+                                  failureStage: "local_commit",
+                                })
+                              }
+                            />
+                            {usesDshRuntimeSettings && <DshChatFontSettings />}
+                          </>
                         ) : activeSection === "shortcuts" ? (
                           <ShortcutSettingsSection isDesktop={Boolean(isDesktop)} />
                         ) : activeSection === "modelProvider" ? (
@@ -1875,6 +1891,12 @@ export function SettingsPage({
                               projectMemoryViewerAvailable={Boolean(isDesktop)}
                               workspaceDisplayNames={memoryWorkspaceDisplayNames}
                             />
+                          </ServiceProvider>
+                        ) : activeSection === "plugin" &&
+                          usesDshRuntimeSettings &&
+                          localHostServices.dshService ? (
+                          <ServiceProvider services={localHostServices}>
+                            <DshAgentPluginsSection isWindowsDesktop={Boolean(isWindowsDesktop)} />
                           </ServiceProvider>
                         ) : activeSection === "plugin" ? (
                           <PluginsSection
@@ -1925,6 +1947,8 @@ export function SettingsPage({
                             key={activeWorkspacePath ?? "no-project"}
                             workspacePath={activeWorkspacePath}
                           />
+                        ) : activeSection === "zcodeImport" ? (
+                          <ZcodeSessionImportSection />
                         ) : activeSection === "migration" ? (
                           <MigrationSection
                             workspacePath={activeWorkspacePath}

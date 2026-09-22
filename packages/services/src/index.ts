@@ -1,7 +1,29 @@
 export { IDshService } from "./dsh/dsh.js";
 export { ICloudBackupService } from "./cloud-backup/cloudBackup.js";
-export type { BackupPreview, BackupSnapshot, BackupProject, BackupStatus, BackupEnableRequest } from "./cloud-backup/cloudBackup.js";
-export type { DshRuntimeHealth, DshModel, DshSession, DshEvent, DshProviderConfig } from "./dsh/dsh.js";
+export type {
+  BackupPreview,
+  BackupSnapshot,
+  BackupProject,
+  BackupStatus,
+  BackupEnableRequest,
+} from "./cloud-backup/cloudBackup.js";
+export type {
+  DshRuntimeHealth,
+  DshModel,
+  DshSession,
+  DshImportedZcodeSession,
+  DshZcodeImportCandidate,
+  DshZcodeImportResult,
+  DshEvent,
+  DshProviderConfig,
+  DshProviderModelSettings,
+  DshProviderSettings,
+  DshProviderSettingsView,
+  DshProviderDraft,
+  DshAgentPluginStatus,
+  DshSessionAnnotation,
+  DshSessionAnnotationInput,
+} from "./dsh/dsh.js";
 // Descriptors & collection (browser-safe)
 export { type ServiceDescriptor, createServiceDescriptor } from "./descriptors.js";
 export { ServiceCollection } from "./collection.js";
