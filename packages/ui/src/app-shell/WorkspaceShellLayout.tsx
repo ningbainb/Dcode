@@ -1737,7 +1737,11 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                         <WorkspaceHeader
                           reserveWindowControls={!isSidePaneVisible}
                           variant={isDshWorkspace || activeTaskId === null ? "draft" : "task"}
-                          draftTitle={isDshWorkspace ? dshSessionTitle || "New task" : undefined}
+                          draftTitle={isDshWorkspace
+                            ? dshSessionTitle && dshSessionTitle !== "New Session"
+                              ? dshSessionTitle
+                              : intl.formatMessage({ id: "workspaceSidebar.newConversation" })
+                            : undefined}
                           draftDropTargetController={
                             !isDshWorkspace && activeTaskId === null
                               ? draftHeaderDropTargetController

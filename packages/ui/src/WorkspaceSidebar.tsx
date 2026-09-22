@@ -1336,7 +1336,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
                 }
               />
             ) : null} */}
-            <Button
+            {!usesDshSessions && <Button
               variant="ghost"
               onClick={handleOpenAutomationsMain}
               data-icon="inline-start"
@@ -1350,8 +1350,8 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
             >
               <CalendarClock className="size-4" />
               {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
-            </Button>
-            <Button
+            </Button>}
+            {!usesDshSessions && <Button
               variant="ghost"
               onClick={handleOpenPluginStoreMain}
               data-icon="inline-start"
@@ -1365,7 +1365,7 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
             >
               <Blocks className="size-4" />
               {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
-            </Button>
+            </Button>}
           </div>
 
           <div className="relative flex min-h-0 flex-1 flex-col">

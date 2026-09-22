@@ -664,6 +664,20 @@ export function SettingsPage({
   const usesDshRuntimeSettings = Boolean(
     isDesktop && !activeWorkspaceTab?.remoteSessionId && !activeWorkspaceTab?.remoteTarget,
   );
+  // DSH owns the local Desktop agent. Show only settings that affect this app
+  // until the legacy capability pages are connected to the DSH runtime.
+  const visibleSettingsSectionGroups = useMemo(() => {
+    if (!usesDshRuntimeSettings) return settingsSectionGroups;
+    const relevant = new Set(["general", "appearance", "modelProvider", "shortcuts", "cloudBackup"]);
+    return settingsSectionGroups.map(group => ({
+      ...group,
+      sections: group.sections.filter(section => relevant.has(section.id)),
+    })).filter(group => group.sections.length > 0);
+  }, [settingsSectionGroups, usesDshRuntimeSettings]);
+  const visibleSettingsSections = useMemo(
+    () => visibleSettingsSectionGroups.flatMap(group => group.sections),
+    [visibleSettingsSectionGroups],
+  );
   const selectDirectory = useSelectDirectory();
   const services = useServices();
   const onboardingRecordService = services.onboardingRecordService;
@@ -1338,12 +1352,16 @@ export function SettingsPage({
     },
     [setCodePreviewSettings],
   );
-  const activeSectionMeta = settingsSections.find((section) => section.id === activeSection);
+  const activeSectionMeta = visibleSettingsSections.find((section) => section.id === activeSection);
   // 灰度裁决异步到达：sections 列表可能在挂载后变化（如 computerUse 区被灰度移除）。
   // 若用户正停留在被移除的 section，回落到第一个可见区，避免整页 return null。
   useEffect(() => {
-    setActiveSection((current) => resolveSettingsSectionForPlatform(current, settingsSections));
-  }, [settingsSections]);
+    const resolved = resolveSettingsSectionForPlatform(activeSection, visibleSettingsSections);
+    if (resolved !== activeSection) {
+      setActiveSection(resolved);
+      writeLastSettingsSectionPreference(resolved);
+    }
+  }, [visibleSettingsSections, activeSection]);
   if (!activeSectionMeta) {
     return null;
   }
@@ -1451,7 +1469,7 @@ export function SettingsPage({
                 className="flex-1 overflow-y-auto px-2 pb-3"
               >
                 <div className="space-y-4">
-                  {settingsSectionGroups.map((group, groupIndex) => {
+                  {visibleSettingsSectionGroups.map((group, groupIndex) => {
                     const groupLabel = intl.formatMessage({
                       id: group.titleId,
                     });

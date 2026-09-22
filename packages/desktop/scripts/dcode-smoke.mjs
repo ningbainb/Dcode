@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { _electron } from 'playwright-core';
 import { createFixture } from '../../dsh-runtime/test/fixture.mjs';
@@ -16,6 +16,11 @@ for (const args of [['init'], ['add', '.'], ['-c', 'user.name=DCode Test', '-c',
   if (result.status !== 0 && !result.stdout.includes('nothing to commit')) throw new Error(result.stderr);
 }
 const errors = [];
+async function waitForWorkspace(chat, path) {
+  const indicator = chat.getByTestId('dsh-current-workspace');
+  await indicator.getByText(basename(path), { exact: true }).waitFor({ timeout: 30000 });
+  assert.equal(await indicator.getAttribute('title'), path);
+}
 function explorerMenus() {
   return ['Directory', 'Drive'].flatMap(kind => ['ZCode.OpenInZCode', 'DCode.OpenInDCode'].map(name => {
     const result = spawnSync('reg.exe', ['query', `HKCU\\Software\\Classes\\${kind}\\shell\\${name}`, '/s'], { encoding: 'utf8', windowsHide: true });
@@ -63,9 +68,10 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
     BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
   }, workspace);
-  await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
+  await waitForWorkspace(chat, workspace);
+  await capture(page, '01-workspace.png');
   console.log('[smoke] Test workspace opened');
-  await chat.getByRole('status').filter({ hasText: 'Connected' }).waitFor({ timeout: 180000 });
+  await chat.getByRole('status').filter({ hasText: /Ready|就绪/ }).waitFor({ timeout: 180000 });
   await page.keyboard.press('Control+,');
   await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
   const modelSettings = page.getByTestId('dsh-model-settings');
@@ -78,8 +84,8 @@ try {
   assert.equal(await modelSettings.getByLabel('API Key', { exact: true }).inputValue(), '');
   await page.getByTestId('settings-back-button').click();
   await modelSettings.waitFor({ state: 'hidden' });
-  await chat.getByLabel('Model', { exact: true }).selectOption('desktop-ui-fixture/dcode-fixture');
-  await chat.getByLabel('Message', { exact: true }).fill('Read input.txt, write and edit output.txt, then execute the verification command.');
+  await chat.getByTestId('dsh-model-select').selectOption('desktop-ui-fixture/dcode-fixture');
+  await chat.getByTestId('dsh-message-input').fill('Read input.txt, write and edit output.txt, then execute the verification command.');
   await capture(page, '01-ready.png');
   await writeFile(join(data, 'interaction.json'), JSON.stringify(await page.evaluate(() => {
     const button = document.querySelector('[data-testid="dcode-chat"] button[type="submit"]');
@@ -87,17 +93,18 @@ try {
     return { buttonDisabled: button?.disabled, buttonRect: button?.getBoundingClientRect().toJSON(),
       textareaValue: textarea?.value, viewport: { width: innerWidth, height: innerHeight }, bodyClass: document.body.className };
   }), null, 2));
-  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await chat.getByTestId('dsh-send').click();
   console.log('[smoke] Message sent');
   const deadline = Date.now() + 180000;
-  while (!(await chat.getByTestId('dcode-messages').innerText()).includes('DCode streaming complete.') || await chat.getByRole('button', { name: 'Stop', exact: true }).isVisible()) {
-    const allow = chat.getByRole('button', { name: 'Allow once', exact: true });
+  while (!(await chat.getByTestId('dcode-messages').innerText()).includes('DCode streaming complete.') || await chat.getByTestId('dsh-stop').isVisible()) {
+    const allow = chat.getByRole('button', { name: /Allow once|允许一次/ });
     if (await allow.isVisible()) await allow.click();
     if (Date.now() > deadline) throw new Error(`Desktop agent timed out: ${await chat.innerText()}`);
     await page.waitForTimeout(300);
   }
   assert.ok((await chat.innerText()).includes('DCODE_SHELL_OK'));
-  await chat.getByTestId('dcode-messages').getByRole('button', { name: /read.*Completed/i }).first().click();
+  await capture(page, '02-activity-compact.png');
+  await chat.getByTestId('dcode-messages').locator('[data-testid="dsh-tool-row"][data-tool-name="read"]').first().click();
   assert.ok((await chat.innerText()).includes('DCode input'));
   assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('<available_skills>'), 'internal skill catalogs must not render as user messages');
   assert.equal(await readFile(join(workspace, 'output.txt'), 'utf8'), 'edited version\n');
@@ -107,9 +114,9 @@ try {
   const savedSession = await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id');
   assert.ok(savedSession, 'first DSH session should be selected in the sidebar');
   await page.getByTestId('conversation-new-task').click();
-  await chat.getByText('AI Coding Workspace', { exact: true }).waitFor();
-  await chat.getByLabel('Message', { exact: true }).fill('DCODE_SECOND_SESSION');
-  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await chat.getByTestId('dsh-empty-state').waitFor();
+  await chat.getByTestId('dsh-message-input').fill('DCODE_SECOND_SESSION');
+  await chat.getByTestId('dsh-send').click();
   await chat.getByTestId('dcode-messages').getByText('DCODE_SECOND_SESSION_REPLY', { exact: false }).waitFor({ timeout: 30000 });
   const secondSession = await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id');
   assert.ok(secondSession && secondSession !== savedSession, 'new task should create one distinct DSH session');
@@ -122,14 +129,14 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
     BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
   }, secondWorkspace);
-  await chat.getByText(secondWorkspace, { exact: true }).waitFor({ timeout: 30000 });
-  await chat.getByText('AI Coding Workspace', { exact: true }).waitFor();
+  await waitForWorkspace(chat, secondWorkspace);
+  await chat.getByTestId('dsh-empty-state').waitFor();
   assert.equal(await sessionList.getByTestId('dsh-session-item').count(), 0, 'other project must not show first project sessions');
   await app.evaluate(({ BrowserWindow, dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
     BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
   }, workspace);
-  await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
+  await waitForWorkspace(chat, workspace);
   await chat.getByTestId('dcode-messages').getByText('DCODE_SHELL_OK', { exact: false }).last().waitFor();
   assert.equal(await sessionList.locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id'), savedSession);
   await page.keyboard.press('Control+,');
@@ -140,15 +147,15 @@ try {
   await page.getByTestId('settings-back-button').click();
   await page.getByTestId('dsh-model-settings').waitFor({ state: 'hidden' });
   assert.ok((await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SHELL_OK'));
-  await chat.getByLabel('Message', { exact: true }).fill('DCODE_CANCEL_TEST');
-  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await chat.getByTestId('dsh-message-input').fill('DCODE_CANCEL_TEST');
+  await chat.getByTestId('dsh-send').click();
   await chat.getByTestId('dcode-messages').getByText('Waiting 0.', { exact: false }).waitFor({ timeout: 30000 });
-  await chat.getByRole('button', { name: 'Stop', exact: true }).click();
-  await chat.getByRole('button', { name: 'Send', exact: true }).waitFor({ timeout: 30000 });
-  await chat.getByLabel('Message', { exact: true }).fill('Continue after the stopped response and confirm the result.');
-  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await chat.getByTestId('dsh-stop').click();
+  await chat.getByTestId('dsh-send').waitFor({ timeout: 30000 });
+  await chat.getByTestId('dsh-message-input').fill('Continue after the stopped response and confirm the result.');
+  await chat.getByTestId('dsh-send').click();
   const continuationDeadline = Date.now() + 30000;
-  while (await chat.getByTestId('dcode-messages').getByText('DCode streaming complete.', { exact: true }).count() < 2 || await chat.getByRole('button', { name: 'Stop', exact: true }).isVisible()) {
+  while (await chat.getByTestId('dcode-messages').getByText('DCode streaming complete.', { exact: true }).count() < 2 || await chat.getByTestId('dsh-stop').isVisible()) {
     if (Date.now() > continuationDeadline) throw new Error('Could not continue conversation after Stop');
     await page.waitForTimeout(100);
   }
@@ -164,11 +171,11 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
     BrowserWindow.getAllWindows()[0].webContents.send('zcode:open-workspace');
   }, workspace);
-  await chat.getByText(workspace, { exact: true }).waitFor({ timeout: 30000 });
+  await waitForWorkspace(chat, workspace);
   await chat.getByTestId('dcode-messages').getByText('DCODE_SHELL_OK', { exact: false }).last().waitFor({ timeout: 30000 });
   assert.equal(await page.getByTestId('dsh-session-list').locator('[data-testid="dsh-session-item"][aria-current="page"]').getAttribute('data-session-id'), savedSession);
   assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('DCODE_SECOND_SESSION_REPLY'));
-  await chat.getByRole('button', { name: 'View changes', exact: true }).click();
+  await chat.getByTestId('dsh-view-changes').click();
   await page.getByText('output.txt', { exact: true }).last().waitFor({ timeout: 30000 });
   await page.getByText('output.txt', { exact: true }).last().click();
   await page.waitForTimeout(2000);

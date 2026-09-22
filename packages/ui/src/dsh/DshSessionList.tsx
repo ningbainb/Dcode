@@ -1,6 +1,7 @@
 import type { DshSession } from "@zcode/services";
 import { cn } from "@/components/lib/utils.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { MessageSquareText } from "lucide-react";
 
 export function DshSessionList({
   sessions,
@@ -42,13 +43,16 @@ export function DshSessionList({
               data-session-id={session.id}
               aria-current={selectedId === session.id ? "page" : undefined}
               className={cn(
-                "w-full truncate rounded-lg px-3 py-2 text-left text-ui-base text-foreground-subtle hover:bg-surface-hover hover:text-foreground",
-                selectedId === session.id && "bg-selected text-foreground",
+                "flex w-full min-w-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-ui-sm text-foreground-subtle transition-colors hover:bg-surface-hover hover:text-foreground",
+                selectedId === session.id && "bg-selected font-medium text-foreground",
               )}
               title={session.title}
               onClick={() => onSelect(session.id)}
             >
-              {session.title}
+              <MessageSquareText className="size-3.5 shrink-0 opacity-70" />
+              <span className="truncate">{session.title === "New Session"
+                ? intl.formatMessage({ id: "workspaceSidebar.newConversation" })
+                : session.title}</span>
             </button>
           </li>
         ))}
