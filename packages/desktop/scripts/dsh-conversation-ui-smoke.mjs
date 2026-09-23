@@ -40,6 +40,8 @@ let annotations=JSON.parse(localStorage.getItem('dcode-test-annotations')||'[]')
 let settings=JSON.parse(localStorage.getItem('dcode-test-settings')||'{"dcodeChatFontSize":null,"dcodeChatFontFamily":"default"}');
 const calls:string[]=[];
 (window as any).__conversationCalls=calls;
+let commandEnabled=true;
+(window as any).__setCommandEnabled=(value:boolean)=>{commandEnabled=value};
 let releaseQueued:(()=>void)|null=null;
 (window as any).__releaseQueued=()=>releaseQueued?.();
 let releaseCreate:(()=>void)|null=null;
@@ -57,7 +59,8 @@ const dshService={
  sendMessage:async(id:string,text:string,_model:any,ids?:string[])=>{calls.push('send:'+id+':'+text+':'+String(ids));if(id==='session-b')await new Promise<void>((resolve)=>{releaseQueued=resolve});else{annotations=annotations.map((item:any)=>({...item,status:'sent'}));persist()}},
 };
 const settingService={get:async()=>({...settings,recentProjects:[],locale:'zh-CN'}),update:async(patch:any)=>{settings={...settings,...patch};localStorage.setItem('dcode-test-settings',JSON.stringify(settings));calls.push('font:'+String(settings.dcodeChatFontSize))}};
-const services={dshService,settingService,broadcastService:{send:async()=>{}}} as any;
+const commandsService={list:async({workspacePath}:any)=>{calls.push('commands:'+workspacePath);return {commands:[{name:'/review',prompt:'Review $1 and $ARGUMENTS',enabled:commandEnabled,source:'user',scope:'project'}]}}};
+const services={dshService,settingService,commandsService,broadcastService:{send:async()=>{}}} as any;
 function Harness(){const [view,setView]=React.useState('chat');const [session,setSession]=React.useState<string|null>('session-a');return <div className="flex h-screen flex-col bg-background text-foreground"><nav className="flex gap-2 border-b border-border p-2"><button onClick={()=>setView('chat')}>会话</button><button onClick={()=>setView('settings')}>外观</button><button onClick={()=>setSession(null)}>新建</button></nav>{view==='chat'?<div className="flex min-h-0 flex-1"><aside className="w-44 border-r border-border"><DshSessionList sessions={[{id:'session-a',title:'Alpha task'},{id:'session-b',title:'Beta task'}] as any} selectedId={session} loading={false} error={null} onSelect={setSession}/></aside><div className="min-w-0 flex-1"><DshChatPanel workspacePath="E:/dcode/project" selectedSessionId={session} onSessionCreated={setSession} onRefreshSessions={()=>{}} onRefreshGit={()=>{}} onOpenDiff={()=>{}}/></div></div>:<div className="mx-auto w-full max-w-4xl p-6"><DshChatFontSettings/></div>}</div>}
 createRoot(document.getElementById('root')!).render(<ZCodeIntlProvider initialLocale="zh-CN"><PlatformProvider platform={{} as any}><ServiceProvider services={services}><TooltipProvider><Harness/></TooltipProvider></ServiceProvider></PlatformProvider></ZCodeIntlProvider>);
 `,
@@ -138,6 +141,29 @@ try {
   await page.getByTestId("dsh-send").click();
   await page.waitForFunction(() =>
     window.__conversationCalls.some((value) => value.startsWith("send:session-a:按照我的批注修改")),
+  );
+  await page.getByTestId("dsh-message-input").fill('/review "src/my file.ts" carefully');
+  await page.getByTestId("dsh-send").click();
+  await page.waitForFunction(() =>
+    window.__conversationCalls.some(
+      (value) =>
+        value.includes("send:session-a:Run custom command /review.") &&
+        value.includes('Review src/my file.ts and "src/my file.ts" carefully'),
+    ),
+  );
+  await page.evaluate(() => window.__setCommandEnabled(false));
+  await page.getByTestId("dsh-message-input").fill("/review blocked");
+  await page.getByTestId("dsh-send").click();
+  await page.getByText("Custom command /review is disabled.").waitFor();
+  assert.equal(await page.getByTestId("dsh-message-input").inputValue(), "/review blocked");
+  assert.equal(
+    await page.evaluate(() =>
+      window.__conversationCalls.some(
+        (value) =>
+          value.includes("send:session-a:Run custom command /review.") && value.includes("blocked"),
+      ),
+    ),
+    false,
   );
   await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
   await assistant.waitFor({ timeout: 120000 });
@@ -221,7 +247,7 @@ try {
   assert.equal(await page.getByTestId("dsh-message-input").inputValue(), "A 的未发送草稿");
   await page.screenshot({ path: join(output, "dsh-conversation.png"), fullPage: true });
   console.log(
-    `PASS: annotations, font persistence, session search, scoped drafts, busy follow-up and cancel. Screenshot: ${join(output, "dsh-conversation.png")}`,
+    `PASS: annotations, font persistence, custom commands, session search, scoped drafts, busy follow-up and cancel. Screenshot: ${join(output, "dsh-conversation.png")}`,
   );
 } finally {
   await app?.close();

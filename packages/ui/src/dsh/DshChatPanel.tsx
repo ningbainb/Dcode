@@ -18,6 +18,7 @@ import { getDshCopy } from "./dshCopy.js";
 import { DshToolActivity } from "./DshToolActivity.js";
 import { DshAnnotatedMessage } from "./DshAnnotatedMessage.js";
 import { clearDraftIfUnchanged, draftScopeKey, promoteDraftToSession } from "./composerDrafts.js";
+import { resolveZcodeCommandPrompt } from "./zcodeCommandPrompt.js";
 import "./dshChatReading.css";
 import { ImportedZcodeChatPanel } from "./ImportedZcodeChatPanel.js";
 
@@ -31,10 +32,16 @@ export function DshChatPanel(props: {
   onRefreshGit: () => void;
   onOpenDiff: () => void;
 }) {
-  return props.selectedSessionId?.startsWith("zcode-import:")
-    ? <ImportedZcodeChatPanel workspacePath={props.workspacePath} sessionId={props.selectedSessionId}
-        onSessionCreated={props.onSessionCreated} onRefreshSessions={props.onRefreshSessions} />
-    : <DshLiveChatPanel {...props} />;
+  return props.selectedSessionId?.startsWith("zcode-import:") ? (
+    <ImportedZcodeChatPanel
+      workspacePath={props.workspacePath}
+      sessionId={props.selectedSessionId}
+      onSessionCreated={props.onSessionCreated}
+      onRefreshSessions={props.onRefreshSessions}
+    />
+  ) : (
+    <DshLiveChatPanel {...props} />
+  );
 }
 
 function DshLiveChatPanel({
@@ -55,7 +62,7 @@ function DshLiveChatPanel({
   const { locale } = useZCodeIntl();
   const copy = getDshCopy(locale);
   const zh = locale.startsWith("zh");
-  const { dshService: service } = useServices();
+  const { dshService: service, commandsService } = useServices();
   const { settings } = useSettings();
   const [health, setHealth] = useState<DshRuntimeHealth>({ state: "starting", generation: 0 });
   const [models, setModels] = useState<DshModel[]>([]);
@@ -274,6 +281,13 @@ function DshLiveChatPanel({
     setPending(true);
     setError("");
     try {
+      // 命令目录由现有 Commands 服务拥有；提交时读取启用状态，避免设置页改动后使用旧缓存。
+      const message = submittedText.trim().startsWith("/")
+        ? resolveZcodeCommandPrompt(
+            submittedText,
+            (await commandsService.list({ workspacePath: sourceScope })).commands,
+          )
+        : submittedText;
       if (!id) {
         const created = await service.createSession(sourceScope, model);
         id = created.id;
@@ -291,7 +305,7 @@ function DshLiveChatPanel({
       }
       setPending(true);
       // 忙碌时沿用会话正在使用的模型，避免排队输入在当前 turn 中途改模型。
-      await service.sendMessage(id, submittedText, wasBusy ? undefined : model, annotationIds);
+      await service.sendMessage(id, message, wasBusy ? undefined : model, annotationIds);
       setDrafts((old) => clearDraftIfUnchanged(old, sentDraftKey, submittedText));
       const storedAnnotations = await service.listSessionAnnotations(id);
       if (selection.current.workspacePath === sourceScope && selection.current.sessionId === id) {

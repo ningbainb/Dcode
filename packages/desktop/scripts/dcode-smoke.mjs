@@ -10,6 +10,9 @@ const workspaceRoot = resolve(desktop, '../../../..');
 const data = resolve(process.env.DCODE_UI_TEST_ROOT || join(workspaceRoot, '.data/ui-smoke'));
 const { workspace, server, requests } = await createFixture(data);
 await mkdir(join(data, 'home'), { recursive: true });
+const commandPath = join(workspace, '.zcode', 'commands', 'review.md');
+await mkdir(join(workspace, '.zcode', 'commands'), { recursive: true });
+await writeFile(commandPath, '---\ndescription: Review a target\n---\n\nDCODE_CUSTOM_COMMAND_MARKER Review $1 and $ARGUMENTS\n');
 await writeFile(join(workspace, 'output.txt'), 'baseline\n');
 for (const args of [['init'], ['add', '.'], ['-c', 'user.name=DCode Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'Fixture baseline']]) {
   const result = spawnSync('git', args, { cwd: workspace, encoding: 'utf8', windowsHide: true });
@@ -116,6 +119,22 @@ try {
   assert.ok((await chat.innerText()).includes('DCode input'));
   assert.ok(!(await chat.getByTestId('dcode-messages').innerText()).includes('<available_skills>'), 'internal skill catalogs must not render as user messages');
   assert.equal(await readFile(join(workspace, 'output.txt'), 'utf8'), 'edited version\n');
+  await chat.getByTestId('dsh-message-input').fill('/review "src/my file.ts" carefully');
+  await chat.getByTestId('dsh-send').click();
+  const commandDeadline = Date.now() + 30000;
+  while (!requests.some(request => JSON.stringify(request.messages).includes('DCODE_CUSTOM_COMMAND_MARKER Review src/my file.ts and \\"src/my file.ts\\" carefully'))) {
+    if (Date.now() > commandDeadline) throw new Error('ZCode command was not expanded into the DSH model request');
+    await page.waitForTimeout(100);
+  }
+  await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
+  const commandConfigPath = join(data, 'home', '.zcode', 'cli', 'config.json');
+  await mkdir(join(data, 'home', '.zcode', 'cli'), { recursive: true });
+  await writeFile(commandConfigPath, JSON.stringify({ command: { [commandPath]: { enable: false } } }));
+  await chat.getByTestId('dsh-message-input').fill('/review blocked');
+  await chat.getByTestId('dsh-send').click();
+  await chat.getByText('Custom command /review is disabled.').waitFor({ timeout: 30000 });
+  assert.equal(await chat.getByTestId('dsh-message-input').inputValue(), '/review blocked');
+  assert.ok(!requests.some(request => JSON.stringify(request.messages).includes('DCODE_CUSTOM_COMMAND_MARKER Review blocked')));
   await capture(page, '02-tools.png');
   const sessionList = page.getByTestId('dsh-session-list');
   await sessionList.getByTestId('dsh-session-item').first().waitFor({ timeout: 30000 });
@@ -220,7 +239,8 @@ try {
     return flatten(Menu.getApplicationMenu()?.items ?? []).join('\n');
   });
   assert.doesNotMatch(nativeLabels, /zcode|feedback|community|what.s new|反馈|社区|更新日志/i);
-  assert.match(nativeLabels, /check for updates|检查更新/i);
+  // 开发态不注册发布更新菜单；打包态才验证 GitHub 更新入口。
+  if (process.env.DCODE_TEST_EXECUTABLE) assert.match(nativeLabels, /check for updates|检查更新/i);
   const aboutWindowPromise = app.waitForEvent('window');
   await page.getByRole('menuitem', { name: /About|关于/ }).click();
   const about = await aboutWindowPromise;
@@ -242,7 +262,7 @@ try {
     'Local DSH workspaces must not subscribe to the unavailable legacy agent index');
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
     toolOutputVisible: true, fileEdited: true, historyRestored: true, projectSwitchIsolated: true, appRestartRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
-    explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, brandingUI: true, upstreamEntrypointsRemoved: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
+    explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, customCommandBridge: true, brandingUI: true, upstreamEntrypointsRemoved: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
 } finally {
   if (app) {
