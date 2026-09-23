@@ -11,6 +11,7 @@ export type {
   DshRuntimeHealth,
   DshModel,
   DshImageInput,
+  DshFileInput,
   DshSession,
   DshImportedZcodeSession,
   DshZcodeImportCandidate,

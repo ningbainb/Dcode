@@ -36,22 +36,23 @@ attachment ID. The transcript projects the stored image reference, and opening
 it reads the bytes through DSH `session/attachment` for that same session.
 The picker follows DSH's default limits of 20 MiB per image, 20 images and
 200 MiB per message; DSH remains the final validator. A provider must actually
-support image input for the model request to succeed. Arbitrary files, PDFs
-and videos need the separate DSH file-upload receipt contract and are not
-presented as supported image attachments.
-In DSH 0.1.7, that contract is `fileUploads/upload(sessionId, { data, name })`:
-the result carries an Agent-scoped `receiptId` and durable file reference. A
-subsequent `session/prompt` must include `{ type: "file", receiptId }` for the
-same session. A file picker alone would not deliver the file to the Agent;
-the upload, prompt admission, draft-failure behavior and restored file display
-must be implemented and tested together before exposing this option.
+support image input for the model request to succeed. Ordinary files, including
+text and PDFs, use a separate picker and DSH 0.1.7's
+`fileUploads/upload(sessionId, { data, name })` contract. Its result carries an
+Agent-scoped `receiptId`; the same session's `session/prompt` then includes
+`{ type: "file", receiptId }`. DSH persists the original bytes and the
+transcript displays its durable file reference. File-only prompts are accepted.
+The current base64 transport limits files to 10 MiB each, 10 files and 50 MiB
+per message. Dcode retains the exact unsent files on upload or prompt failure,
+and clears them only after admission. Larger streaming uploads and in-app file
+preview are separate work; a file chip does not pretend to be a preview button.
 
 The existing ZCode shell already supplies the project sidebar, file and Git
 surfaces, change viewer, cloud backup settings, theme and typography; DSH does
 not need replacements for those surfaces. DSH-backed conversation annotations,
 plugin toggles, models, approvals and cancellation are already connected through
-their own service contracts. ZCode's legacy task queue editing, non-image file
-uploads and CLI-only modes have different accepted-state owners and are not
+their own service contracts. ZCode's legacy task queue editing and CLI-only
+modes have different accepted-state owners and are not
 silently routed to DSH sessions; each needs a DSH-native capability contract
 before it can be exposed here.
 
@@ -81,3 +82,6 @@ DSH session list --> sidebar title filter --> visible rows
 - An image-only prompt reaches the native DSH session; the attachment survives
   session restoration and can be opened through the same session's attachment
   route. Invalid images fail without clearing the unsent draft.
+- A file-only prompt first receives a DSH upload receipt, then reaches the
+  same native session; its stored file reference survives session restoration.
+  Invalid or failed files leave the unsent draft in place.

@@ -7,6 +7,7 @@ export interface DshRow {
   input?: string;
   state?: "input-available" | "output-available" | "output-error";
   images?: Array<{ attachmentId: string; name?: string }>;
+  files?: Array<{ attachmentId: string; name: string; bytes: number }>;
 }
 export interface DshProjection {
   rows: DshRow[];
@@ -121,9 +122,16 @@ export function projectFrame(state: DshProjection, input: unknown): DshProjectio
             ...(typeof attachment.name === "string" ? { name: attachment.name } : {}) };
         }).filter((image) => image.attachmentId)
       : [];
-    if (text || thinking || images.length)
+    const files = !assistant && Array.isArray(message.content)
+      ? message.content.map(record).filter((block) => block.type === "file").map((block) => {
+          const attachment = record(block.attachment);
+          return { attachmentId: String(attachment.attachmentId ?? ""),
+            name: String(attachment.name ?? "File"), bytes: Number(attachment.bytes ?? 0) };
+        }).filter((file) => file.attachmentId)
+      : [];
+    if (text || thinking || images.length || files.length)
       rows.push({ id: `event:${seq}`, kind: assistant ? "assistant" : "user", text, thinking,
-        ...(images.length ? { images } : {}) });
+        ...(images.length ? { images } : {}), ...(files.length ? { files } : {}) });
     return { ...next, rows };
   }
   if (event.type === "tool/call") {

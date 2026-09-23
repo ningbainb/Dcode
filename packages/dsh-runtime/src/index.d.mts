@@ -14,6 +14,10 @@ export interface ImageInput {
   data: string;
   name?: string;
 }
+export interface FileInput {
+  data: string;
+  name: string;
+}
 export interface SubagentSettingsView {
   maxDepth: number;
   revision: number;
@@ -173,6 +177,7 @@ export class DshBackend extends EventEmitter {
     model?: Model,
     annotationIds?: string[],
     images?: ImageInput[],
+    files?: FileInput[],
   ): Promise<void>;
   readImageAttachment(sessionId: string, attachmentId: string): Promise<{
     attachment: { mediaType: ImageInput["mediaType"]; name?: string };

@@ -18,6 +18,10 @@ export interface DshImageInput {
   data: string;
   name?: string;
 }
+export interface DshFileInput {
+  data: string;
+  name: string;
+}
 
 export interface DshSubagentSettingsView {
   maxDepth: number;
@@ -221,6 +225,7 @@ export interface IDshService {
     model?: DshModel,
     annotationIds?: string[],
     images?: DshImageInput[],
+    files?: DshFileInput[],
   ): Promise<void>;
   readImageAttachment(sessionId: string, attachmentId: string): Promise<{
     attachment: { mediaType: DshImageInput["mediaType"]; name?: string };

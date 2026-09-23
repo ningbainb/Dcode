@@ -93,3 +93,10 @@ The packaging gate also imports official runtime plugins, detecting corrupted tr
 persists a transcript. `sendMessage` attaches pending annotations to the DSH
 prompt and marks them sent only after prompt admission. See
 `docs/DSH-CONVERSATION-ANNOTATIONS.md` for lifecycle and font setting rules.
+
+`sendMessage` admits PNG/JPEG/WebP/GIF image parts directly through DSH's
+`session/prompt`. Ordinary files first use `fileUploads/upload` in the exact
+receiving session; only its Agent-scoped receipt is sent as a file part in the
+subsequent prompt. A failed upload cannot submit a partial prompt. DSH owns
+durable attachment references and bytes; Dcode stores only unsent browser
+drafts and displays references from the native session history.

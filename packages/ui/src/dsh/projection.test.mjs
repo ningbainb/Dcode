@@ -48,6 +48,16 @@ test("image-only user prompts remain visible when a DSH session is restored", ()
   assert.equal(state.rows[0].text, "");
   assert.deepEqual(state.rows[0].images, [{ attachmentId: "image:1", name: "diagram.png" }]);
 });
+test("file-only user prompts keep the stored reference on session restoration", () => {
+  const state = projectFrame(emptyProjection(), { type: "snapshot", records: [
+    event(0, "user/message", { source: { kind: "user" }, content: [
+      { type: "file", attachment: { attachmentId: "sha256:file-1", name: "notes.pdf", bytes: 72 } },
+    ] }),
+  ] });
+  assert.equal(state.rows.length, 1);
+  assert.equal(state.rows[0].text, "");
+  assert.deepEqual(state.rows[0].files, [{ attachmentId: "sha256:file-1", name: "notes.pdf", bytes: 72 }]);
+});
 test("DSH 0.1.7 tool messages keep output and error state across snapshots", () => {
   const records = [
     event(0, "tool/call", { callId: "read-1", name: "read", arguments: "{}" }),

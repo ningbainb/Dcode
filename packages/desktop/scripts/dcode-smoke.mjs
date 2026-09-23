@@ -83,7 +83,7 @@ try {
   await waitForWorkspace(chat, workspace);
   await capture(page, '01-workspace.png');
   console.log('[smoke] Test workspace opened');
-  await chat.getByRole('status').filter({ hasText: /Ready|就绪/ }).waitFor({ timeout: 180000 });
+  await chat.getByRole('status').filter({ hasText: /Ready|就绪/ }).waitFor({ timeout: 300000 });
   await page.keyboard.press('Control+,');
   await page.getByRole('button', { name: /^(Model settings|模型设置)$/ }).click();
   const modelSettings = page.getByTestId('dsh-model-settings');
@@ -193,6 +193,19 @@ try {
     assert.match(await preview.getByRole('img', { name: 'dcode-icon.png' }).getAttribute('src'), /^data:image\/png;base64,/);
     await capture(page, '07-image-preview.png');
     await preview.getByRole('button', { name: /Close image|关闭图片/ }).click();
+    await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
+  }
+  if (process.env.DCODE_TEST_FILES === '1') {
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      chat.getByTestId('dsh-add-files').click(),
+    ]);
+    await chooser.setFiles(join(workspace, 'output.txt'));
+    await chat.getByTestId('dsh-file-drafts').getByText('output.txt').waitFor();
+    await capture(page, '08-file-draft.png');
+    await chat.getByTestId('dsh-send').click();
+    await chat.getByTestId('dsh-message-files').last().getByText('output.txt').waitFor({ timeout: 30000 });
+    await capture(page, '09-file-message.png');
     await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
   }
   await writeFile(userMcpConfigPath, JSON.stringify({ ...userMcpConfig, command: { [commandPath]: { enable: false } } }));

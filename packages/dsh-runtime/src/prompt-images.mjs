@@ -18,7 +18,9 @@ export function imagePromptParts(images) {
       throw new TypeError("Each image must be no larger than 20 MiB.");
     bytes += length;
     if (bytes > MAX_MESSAGE_BYTES) throw new TypeError("Images exceed the 200 MiB message limit.");
-    const name = typeof image.name === "string" ? image.name.replaceAll(/[\\/\x00-\x1f]/g, "").slice(0, 200) : undefined;
+    const name = typeof image.name === "string"
+      ? image.name.replaceAll(/[\\/]/g, "").replaceAll(/\p{Cc}/gu, "").slice(0, 200)
+      : undefined;
     return { type: "image", mediaType: image.mediaType, data: image.data, ...(name ? { name } : {}) };
   });
 }

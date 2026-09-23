@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-export async function createFixture(root, { writeSettings = true } = {}) {
+export async function createFixture(root, { writeSettings = true, fileReadPrompt = false } = {}) {
 const workspace = join(root, 'project');
 await mkdir(workspace, { recursive: true });
 await mkdir(join(root, 'dsh'), { recursive: true });
@@ -36,6 +36,23 @@ const server = createServer(async (request, response) => {
     const lastHumanUser = (body.messages ?? []).filter(message => message.role === 'user' &&
       !String(message.content).startsWith('Current runtime context.') &&
       !String(message.content).includes('<available_skills>')).at(-1);
+    const filePath = fileReadPrompt
+      ? /verbatim read-only copy saved at "([^"]+)"/.exec(String(lastHumanUser?.content ?? ''))?.[1]
+      : undefined;
+    if (filePath && toolResults === 0) {
+      assert.ok(body.tools?.some(tool => tool.function?.name === 'read'), 'read tool missing for uploaded file');
+      send({ role: 'assistant', tool_calls: [{ index: 0, id: 'call-file-read', type: 'function',
+        function: { name: 'read', arguments: JSON.stringify({ file_path: filePath }) } }] });
+      send({}, 'tool_calls');
+      response.end('data: [DONE]\n\n');
+      return;
+    }
+    if (filePath && toolResults > 0) {
+      send({ role: 'assistant', content: 'FILE_READ_COMPLETE' });
+      send({}, 'stop');
+      response.end('data: [DONE]\n\n');
+      return;
+    }
     if (JSON.stringify(lastHumanUser).includes('DCODE_CANCEL_TEST')) {
       for (let index = 0; index < 600 && !response.destroyed; index++) {
         send({ role: 'assistant', content: `Waiting ${index}. ` }); await delay(100);

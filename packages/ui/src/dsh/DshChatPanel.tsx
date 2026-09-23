@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import type {
   DshModel,
   DshImageInput,
+  DshFileInput,
   DshRuntimeHealth,
   DshSessionAnnotation,
   DshSessionAnnotationInput,
@@ -12,7 +13,7 @@ import { useSettings } from "@/hooks/useSettingService.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
-import { ArrowUp, FileDiff, FolderOpen, ImagePlus, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowUp, FileDiff, FileText, FolderOpen, ImagePlus, Paperclip, ShieldCheck, Sparkles, X } from "lucide-react";
 import appLogoUrl from "@/assets/dcode-logo.png";
 import { emptyProjection, projectFrame, record, type DshRow } from "./projection.js";
 import { getDshCopy } from "./dshCopy.js";
@@ -31,15 +32,25 @@ const IMAGE_TYPES = new Set<DshImageInput["mediaType"]>([
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_COUNT = 20;
 const MAX_IMAGE_TOTAL_BYTES = 200 * 1024 * 1024;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILE_COUNT = 10;
+const MAX_FILE_TOTAL_BYTES = 50 * 1024 * 1024;
 
-async function encodeImage(file: File): Promise<DshImageInput> {
-  const data = await new Promise<string>((resolve, reject) => {
+async function readFileBase64(file: File): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(reader.error ?? new Error("Could not read image."));
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read file."));
     reader.onload = () => resolve(String(reader.result).split(",", 2)[1] ?? "");
     reader.readAsDataURL(file);
   });
-  return { mediaType: file.type as DshImageInput["mediaType"], data, name: file.name };
+}
+
+async function encodeImage(file: File): Promise<DshImageInput> {
+  return { mediaType: file.type as DshImageInput["mediaType"], data: await readFileBase64(file), name: file.name };
+}
+
+async function encodeFile(file: File): Promise<DshFileInput> {
+  return { data: await readFileBase64(file), name: file.name };
 }
 
 function ImageDraftItem({ file, remove, zh }: { file: File; remove: () => void; zh: boolean }) {
@@ -59,6 +70,17 @@ function ImageDraftItem({ file, remove, zh }: { file: File; remove: () => void; 
       </button>
     </span>
   );
+}
+
+function FileDraftItem({ file, remove, zh }: { file: File; remove: () => void; zh: boolean }) {
+  return <span className="flex max-w-52 items-center gap-1.5 rounded-lg border border-border/70 bg-background/60 px-2 py-1.5 text-ui-xs">
+    <FileText className="size-3.5 shrink-0 text-foreground-subtle" />
+    <span className="min-w-0 truncate" title={file.name}>{file.name}</span>
+    <button type="button" aria-label={zh ? `移除 ${file.name}` : `Remove ${file.name}`} onClick={remove}
+      className="rounded p-1 text-foreground-subtle hover:bg-surface-hover hover:text-foreground">
+      <X className="size-3" />
+    </button>
+  </span>;
 }
 
 export function DshChatPanel(props: {
@@ -106,6 +128,7 @@ function DshLiveChatPanel({
   const [modelKey, setModelKey] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [imageDrafts, setImageDrafts] = useState<Record<string, File[]>>({});
+  const [fileDrafts, setFileDrafts] = useState<Record<string, File[]>>({});
   const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
   const [projection, setProjection] = useState(emptyProjection);
   const [error, setError] = useState("");
@@ -125,9 +148,11 @@ function DshLiveChatPanel({
   const bottom = useRef<HTMLDivElement>(null);
   const composerInputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const currentDraftKey = draftScopeKey(workspacePath, selectedSessionId);
   const draft = drafts[currentDraftKey] ?? "";
   const images = imageDrafts[currentDraftKey] ?? [];
+  const files = fileDrafts[currentDraftKey] ?? [];
   const setDraft = (value: string | ((previous: string) => string)) => {
     setDrafts((previous) => {
       const oldText = previous[currentDraftKey] ?? "";
@@ -342,6 +367,25 @@ function DshLiveChatPanel({
     setError("");
     setImageDrafts((old) => ({ ...old, [currentDraftKey]: [...(old[currentDraftKey] ?? []), ...additions] }));
   }
+  function attachFiles(selection: FileList | null) {
+    if (!selection?.length) return;
+    const additions = Array.from(selection);
+    if (additions.some((file) => file.type.startsWith("image/"))) {
+      setError(zh ? "图片请使用旁边的添加图片入口。" : "Use Add images for pictures.");
+      return;
+    }
+    if (additions.some((file) => file.size > MAX_FILE_BYTES)) {
+      setError(zh ? "单个文件不能超过 10 MiB。" : "Each file must be 10 MiB or smaller.");
+      return;
+    }
+    if (files.length + additions.length > MAX_FILE_COUNT ||
+        [...files, ...additions].reduce((sum, file) => sum + file.size, 0) > MAX_FILE_TOTAL_BYTES) {
+      setError(zh ? "最多 10 个文件，总大小不超过 50 MiB。" : "Choose at most 10 files, up to 50 MiB total.");
+      return;
+    }
+    setError("");
+    setFileDrafts((old) => ({ ...old, [currentDraftKey]: [...(old[currentDraftKey] ?? []), ...additions] }));
+  }
   async function openImageAttachment(attachmentId: string, name?: string) {
     if (!service || !selectedSessionId) return;
     const scope = workspacePath;
@@ -354,11 +398,12 @@ function DshLiveChatPanel({
     } catch (failure) { report(failure); }
   }
   async function send() {
-    if (!service || (!draft.trim() && images.length === 0) || pending) return;
+    if (!service || (!draft.trim() && images.length === 0 && files.length === 0) || pending) return;
     const sourceScope = workspacePath;
     const sourceSessionId = selectedSessionId;
     const submittedText = draft;
     const submittedImages = images;
+    const submittedFiles = files;
     const wasBusy = projection.busy;
     const annotationIds = selectedAnnotationIds ?? undefined;
     let sentDraftKey = currentDraftKey;
@@ -379,6 +424,7 @@ function DshLiveChatPanel({
         sentDraftKey = draftScopeKey(sourceScope, id);
         setDrafts((old) => promoteDraftToSession(old, currentDraftKey, sentDraftKey));
         setImageDrafts((old) => ({ ...old, [sentDraftKey]: old[currentDraftKey] ?? [], [currentDraftKey]: [] }));
+        setFileDrafts((old) => ({ ...old, [sentDraftKey]: old[currentDraftKey] ?? [], [currentDraftKey]: [] }));
         // 创建会话返回时用户可能已切走；只在原草稿仍被选中时接管当前界面。
         if (
           selection.current.workspacePath === sourceScope &&
@@ -393,9 +439,13 @@ function DshLiveChatPanel({
       // 忙碌时沿用会话正在使用的模型，避免排队输入在当前 turn 中途改模型。
       const encodedImages: DshImageInput[] = [];
       for (const file of submittedImages) encodedImages.push(await encodeImage(file));
-      await service.sendMessage(id, message, wasBusy ? undefined : model, annotationIds, encodedImages);
+      const encodedFiles: DshFileInput[] = [];
+      for (const file of submittedFiles) encodedFiles.push(await encodeFile(file));
+      await service.sendMessage(id, message, wasBusy ? undefined : model, annotationIds, encodedImages, encodedFiles);
       setDrafts((old) => clearDraftIfUnchanged(old, sentDraftKey, submittedText));
       setImageDrafts((old) => old[sentDraftKey] === submittedImages
+        ? { ...old, [sentDraftKey]: [] } : old);
+      setFileDrafts((old) => old[sentDraftKey] === submittedFiles
         ? { ...old, [sentDraftKey]: [] } : old);
       const storedAnnotations = await service.listSessionAnnotations(id);
       if (selection.current.workspacePath === sourceScope && selection.current.sessionId === id) {
@@ -625,6 +675,14 @@ function DshLiveChatPanel({
                       ))}
                     </div>
                   )}
+                  {!!item.files?.length && <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dsh-message-files">
+                    {item.files.map((file) => <span key={file.attachmentId}
+                      className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/50 px-2 py-1 text-ui-xs text-foreground-subtle"
+                      title={file.name}>
+                      <FileText className="size-3.5" />
+                      <span className="max-w-40 truncate">{file.name}</span>
+                    </span>)}
+                  </div>}
                 </div>
               </article>
             ),
@@ -714,6 +772,11 @@ function DshLiveChatPanel({
               remove={() => setImageDrafts((old) => ({ ...old,
                 [currentDraftKey]: (old[currentDraftKey] ?? []).filter((_, itemIndex) => itemIndex !== index) }))} />)}
           </div>}
+          {!!files.length && <div className="flex flex-wrap gap-1.5 px-3 pt-3" data-testid="dsh-file-drafts">
+            {files.map((file, index) => <FileDraftItem key={`${file.name}:${index}`} file={file} zh={zh}
+              remove={() => setFileDrafts((old) => ({ ...old,
+                [currentDraftKey]: (old[currentDraftKey] ?? []).filter((_, itemIndex) => itemIndex !== index) }))} />)}
+          </div>}
           <textarea
             ref={composerInputRef}
             data-testid="dsh-message-input"
@@ -744,6 +807,15 @@ function DshLiveChatPanel({
                 disabled={pending || health.state !== "ready"}
                 onClick={() => imageInputRef.current?.click()}>
                 <ImagePlus className="size-4" />
+              </Button>
+              <input ref={fileInputRef} type="file" className="hidden" multiple
+                aria-label={zh ? "选择文件" : "Choose files"}
+                onChange={(event) => { attachFiles(event.target.files); event.target.value = ""; }} />
+              <Button type="button" size="sm" variant="ghost" className="shrink-0 px-2"
+                aria-label={zh ? "添加文件" : "Add files"} data-testid="dsh-add-files"
+                disabled={pending || health.state !== "ready"}
+                onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="size-4" />
               </Button>
               <span
                 data-testid="dsh-current-workspace"
@@ -811,7 +883,7 @@ function DshLiveChatPanel({
                 type="submit"
                 size="sm"
                 className="gap-1.5 rounded-lg"
-                disabled={pending || (!draft.trim() && images.length === 0) || health.state !== "ready"}
+                disabled={pending || (!draft.trim() && images.length === 0 && files.length === 0) || health.state !== "ready"}
               >
                 {projection.busy ? copy.queue : copy.send}
                 <ArrowUp className="size-3.5" />

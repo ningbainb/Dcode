@@ -37,3 +37,10 @@ composer Escape call the same DSH cancellation command. The sidebar filters
 DSH-owned sessions locally by displayed title. Completed messages reuse
 ZCode's copy action. See `docs/DSH-ZCODE-WORKFLOW-BRIDGE.md` for failure and
 stale-response rules.
+
+Images and ordinary files have separate composer buttons and per-session
+unsent drafts. Image references can be reopened through DSH's attachment route;
+file references show their stored names without claiming an in-app preview.
+Submission clears only the exact accepted draft. A failed file upload or prompt
+admission keeps the corresponding unsent selection available; an attachment
+read error is reported without changing the session.

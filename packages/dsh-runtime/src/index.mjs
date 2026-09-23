@@ -26,6 +26,7 @@ import {
 import { readMcpServerSettings, writeMcpServerSettings } from "./mcp-servers.mjs";
 import { grantWindowsWorkspaceOwnerRight } from "./windows-workspace-acl.mjs";
 import { imagePromptParts } from "./prompt-images.mjs";
+import { fileUploadRequests } from "./prompt-files.mjs";
 
 export class DshBackend extends EventEmitter {
   constructor(options) {
@@ -364,13 +365,20 @@ export class DshBackend extends EventEmitter {
       clearTimeout(timeout);
     }
   }
-  async sendMessage(sessionId, message, model, annotationIds, images) {
+  async sendMessage(sessionId, message, model, annotationIds, images, files) {
     const imageParts = imagePromptParts(images);
-    if (!message.trim() && imageParts.length === 0) throw new Error("Enter a message or attach an image first.");
+    const fileRequests = fileUploadRequests(files);
+    if (!message.trim() && imageParts.length === 0 && fileRequests.length === 0)
+      throw new Error("Enter a message or attach a file first.");
     await this.start();
     if (!this.followers.has(sessionId)) await this.resumeSession(sessionId);
     if (model) await this.selectModel(sessionId, model);
     const annotations = await this.annotations.selectForPrompt(sessionId, annotationIds);
+    const fileParts = [];
+    for (const request of fileRequests) {
+      const receipt = await this.transport.call("fileUploads/upload", { agentId: sessionId, request });
+      fileParts.push({ type: "file", receiptId: receipt.receiptId });
+    }
     await this.transport.call("session/prompt", {
       request: {
         requestId: randomUUID(),
@@ -381,6 +389,7 @@ export class DshBackend extends EventEmitter {
             ? [{ type: "text", text: buildPromptWithSessionAnnotations(message, annotations) }]
             : []),
           ...imageParts,
+          ...fileParts,
         ],
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },

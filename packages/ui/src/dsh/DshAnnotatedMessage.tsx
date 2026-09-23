@@ -243,7 +243,7 @@ export function DshAnnotatedMessage({
 
   return (
     <div className="min-w-0" data-testid={`dsh-annotated-${row.id}`}>
-      <div
+      {!!row.text && <div
         ref={content}
         onMouseUp={readSelection}
         onKeyUp={readSelection}
@@ -260,8 +260,8 @@ export function DshAnnotatedMessage({
             {row.text}
           </MessageResponse>
         )}
-      </div>
-      {stable && (
+      </div>}
+      {stable && !!row.text && (
         <MessageActions className="mt-1 justify-end">
           <MessageAction
             data-testid={`dsh-copy-${row.id}`}
