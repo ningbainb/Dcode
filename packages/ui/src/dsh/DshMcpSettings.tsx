@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- DSH MCP settings keeps the server list and unsaved editor in one state owner. */
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Cable, Plus, Trash2 } from "lucide-react";
+import { Cable, Download, Plus, Trash2 } from "lucide-react";
 import type { DshMcpServer, DshMcpServerSettingsView } from "@zcode/services";
 import { useServices } from "@/hooks/useServices.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input.js";
 import { Switch } from "@/components/ui/switch.js";
 import { SettingsFormTextarea } from "@/settings/SettingsFormTextarea.js";
 import { SettingsResourceHeaderActions } from "@/settings/SettingsResourceHeaderActions.js";
+import { prepareZcodeMcpImport } from "./zcodeMcpImport.js";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,9 @@ const COPY = {
   zh: {
     intro: "管理 DSH Agent 真正使用的 MCP 服务器。浏览器和电脑控制仍在“插件”中管理。",
     add: "添加服务器",
+    importZcode: "从 ZCode 导入",
+    importResult: (imported: number, skipped: number) =>
+      `已导入 ${imported} 个停用的服务器，跳过 ${skipped} 个。请检查配置后逐项启用。`,
     refresh: "刷新",
     empty: "尚未添加 MCP 服务器。",
     serverName: "服务器名称",
@@ -61,6 +65,9 @@ const COPY = {
     intro:
       "Manage MCP servers used by the DSH Agent. Browser and computer control stay in Plugins.",
     add: "Add server",
+    importZcode: "Import from ZCode",
+    importResult: (imported: number, skipped: number) =>
+      `Imported ${imported} disabled servers; skipped ${skipped}. Review each before enabling.`,
     refresh: "Refresh",
     empty: "No MCP servers have been added.",
     serverName: "Server name",
@@ -148,7 +155,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function DshMcpSettings() {
-  const { dshService } = useServices();
+  const { dshService, mcpSyncService } = useServices();
   const { locale } = useZCodeIntl();
   const t = locale.startsWith("zh") ? COPY.zh : COPY.en;
   const [view, setView] = useState<DshMcpServerSettingsView | null>(null);
@@ -221,21 +228,54 @@ export function DshMcpSettings() {
     }
   }
 
+  async function importFromZcode() {
+    if (!dshService || !mcpSyncService || !view || busy) return;
+    setBusy(true);
+    setNotice("");
+    try {
+      const source = await mcpSyncService.loadMcpFromUserDirectory();
+      const prepared = prepareZcodeMcpImport(source.servers, view.servers);
+      if (prepared.imported > 0) {
+        const next = await dshService.updateMcpServers(prepared.servers, view.revision);
+        setView(next);
+        setSelectedName(prepared.servers[view.servers.length]?.serverName ?? null);
+        window.dispatchEvent(new Event("dcode:dsh-runtime-restarted"));
+      }
+      setNotice(t.importResult(prepared.imported, prepared.skipped));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="space-y-4" data-testid="dsh-mcp-settings">
       <div className="flex items-start justify-between gap-3">
         <p className="text-ui-base leading-6 text-foreground-subtle">{t.intro}</p>
-        <SettingsResourceHeaderActions
-          onRefresh={() => void refresh()}
-          refreshing={loading}
-          onNew={() => {
-            setSelectedName("new");
-            setDraft(toDraft());
-            setNotice("");
-          }}
-          newLabel={t.add}
-          refreshLabel={t.refresh}
-        />
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy || !view}
+            onClick={() => void importFromZcode()}
+          >
+            <Download className="size-4" />
+            {t.importZcode}
+          </Button>
+          <SettingsResourceHeaderActions
+            onRefresh={() => void refresh()}
+            refreshing={loading}
+            onNew={() => {
+              setSelectedName("new");
+              setDraft(toDraft());
+              setNotice("");
+            }}
+            newLabel={t.add}
+            refreshLabel={t.refresh}
+          />
+        </div>
       </div>
       <div className="overflow-clip rounded-xl border border-border bg-card">
         <div className="grid min-h-[32rem] grid-cols-[56px_minmax(0,1fr)] md:grid-cols-[224px_minmax(0,1fr)]">

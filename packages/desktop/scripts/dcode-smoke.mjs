@@ -10,6 +10,13 @@ const workspaceRoot = resolve(desktop, '../../../..');
 const data = resolve(process.env.DCODE_UI_TEST_ROOT || join(workspaceRoot, '.data/ui-smoke'));
 const { workspace, server, requests } = await createFixture(data);
 await mkdir(join(data, 'home'), { recursive: true });
+const userMcpConfigPath = join(data, 'home', '.zcode', 'cli', 'config.json');
+await mkdir(join(data, 'home', '.zcode', 'cli'), { recursive: true });
+const userMcpConfig = { mcp: { servers: {
+  imported_tool: { type: 'stdio', command: 'node', args: ['fixture-server.js'] },
+  inline_secret: { type: 'stdio', command: 'node', env: { API_KEY: 'synthetic-secret' } },
+} } };
+await writeFile(userMcpConfigPath, JSON.stringify(userMcpConfig));
 const commandPath = join(workspace, '.zcode', 'commands', 'review.md');
 await mkdir(join(workspace, '.zcode', 'commands'), { recursive: true });
 await writeFile(commandPath, '---\ndescription: Review a target\n---\n\nDCODE_CUSTOM_COMMAND_MARKER Review $1 and $ARGUMENTS\n');
@@ -98,7 +105,14 @@ try {
   assert.equal(await modelSettings.getByTestId('model-provider-api-key-input').inputValue(), '');
   await capture(page, '05-dsh-model-providers.png');
   await page.getByRole('button', { name: /^MCP (servers|服务器)$/i }).click();
-  await page.getByTestId('dsh-mcp-settings').waitFor();
+  const mcpSettings = page.getByTestId('dsh-mcp-settings');
+  await mcpSettings.waitFor();
+  await mcpSettings.getByRole('button', { name: /^(Import from ZCode|从 ZCode 导入)$/ }).click();
+  await mcpSettings.getByText(/已导入 1 个停用的服务器，跳过 1 个|Imported 1 disabled servers; skipped 1/).waitFor({ timeout: 120000 });
+  await mcpSettings.getByTestId('dsh-mcp-nav-item').filter({ hasText: 'imported_tool' }).waitFor();
+  assert.equal(await mcpSettings.getByTestId('dsh-mcp-nav-item').filter({ hasText: 'inline_secret' }).count(), 0);
+  assert.equal(await readFile(userMcpConfigPath, 'utf8'), JSON.stringify(userMcpConfig));
+  assert.doesNotMatch(await readFile(join(data, 'dsh-mcp-servers.json'), 'utf8'), /synthetic-secret/);
   await capture(page, 'mcp-settings.png');
   await page.getByTestId('settings-back-button').click();
   await modelSettings.waitFor({ state: 'hidden' });
@@ -134,9 +148,7 @@ try {
     await page.waitForTimeout(100);
   }
   await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
-  const commandConfigPath = join(data, 'home', '.zcode', 'cli', 'config.json');
-  await mkdir(join(data, 'home', '.zcode', 'cli'), { recursive: true });
-  await writeFile(commandConfigPath, JSON.stringify({ command: { [commandPath]: { enable: false } } }));
+  await writeFile(userMcpConfigPath, JSON.stringify({ ...userMcpConfig, command: { [commandPath]: { enable: false } } }));
   await chat.getByTestId('dsh-message-input').fill('/review blocked');
   await chat.getByTestId('dsh-send').click();
   await chat.getByText('Custom command /review is disabled.').waitFor({ timeout: 30000 });

@@ -9,6 +9,17 @@ Streamable HTTP server. Built-in browser and Windows GUI entries remain managed
 by the separate Plugins page. Remote and Web workspaces retain their existing
 ZCode settings behavior.
 
+The local page can explicitly import compatible user-level ZCode MCP entries.
+The existing ZCode MCP sync service remains the reader and owner of source files;
+the DSH MCP file remains the only DSH write path. The import skips duplicate or
+invalid names, inline environment values, headers, OAuth, unknown configuration
+fields and unsupported transports. Compatible entries are saved disabled so
+the user can inspect and enable them individually. It never edits the ZCode
+source or silently synchronizes subsequent ZCode changes. A failed source read
+or stale DSH revision writes nothing; the page reports imported and skipped
+counts. Workspace-scoped ZCode servers are excluded because the DSH profile is
+shared across workspaces.
+
 Stdio configuration includes a stable server name, executable, arguments,
 working directory and environment-variable references. HTTP configuration
 includes a URL and an optional Bearer-token environment-variable reference.
@@ -60,3 +71,6 @@ its configuration was accepted.
   patch. Missing variable names and malformed URLs are rejected.
 - A local fixture MCP server is discoverable by a real DSH session, and its
   tool call completes. Desktop UI smoke covers the settings flow.
+- Import a compatible user-level ZCode stdio and HTTP entry, verify both are
+  disabled in DSH, and verify source files are unchanged. Duplicate names,
+  workspace entries, embedded credentials and unsupported shapes are skipped.
