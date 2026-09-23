@@ -100,9 +100,43 @@ try {
   assert.equal(disabledResults.length, 1);
   assert.doesNotMatch(JSON.stringify(disabledResults), /Dcode review checklist/);
   assert.doesNotMatch(JSON.stringify(requests), /DCODE_BRIDGED_SKILL/);
-  console.log(
-    "PASS: DSH loaded ZCode skill and respected its disabled setting in the next session.",
+  const pluginRoot = join(root, "review-plugin");
+  const pluginStorage = join(home, ".zcode", "cli", "plugins");
+  await mkdir(join(pluginRoot, ".zcode-plugin"), { recursive: true });
+  await mkdir(join(pluginRoot, "skills", "plugin-review"), { recursive: true });
+  await mkdir(pluginStorage, { recursive: true });
+  await writeFile(
+    join(pluginRoot, ".zcode-plugin", "plugin.json"),
+    JSON.stringify({ name: "review-plugin" }),
   );
+  await writeFile(
+    join(pluginRoot, "skills", "plugin-review", "SKILL.md"),
+    "---\nname: plugin-review\ndescription: DCODE_PLUGIN_SKILL\n---\nFollow the plugin review checklist.\n",
+  );
+  await writeFile(
+    join(pluginStorage, "installed_plugins.json"),
+    JSON.stringify({
+      plugins: [
+        { id: "review-plugin@test-market", marketplace: "test-market", installPath: pluginRoot },
+      ],
+    }),
+  );
+  await writeFile(
+    configPath,
+    JSON.stringify({ plugins: { enabledPlugins: { "review-plugin@test-market": true } } }),
+  );
+  commands.splice(0, commands.length, ["skill", { name: "plugin-review" }]);
+  requests.splice(0);
+  const third = await backend.createSession(workspace, model);
+  await backend.resumeSession(third.id);
+  await backend.sendMessage(third.id, "Load the plugin-review skill.", model);
+  await waitForTurn(third.id);
+  assert.match(JSON.stringify(requests), /DCODE_PLUGIN_SKILL/);
+  assert.match(
+    JSON.stringify(events.filter((event) => event.sessionId === third.id)),
+    /plugin review checklist/,
+  );
+  console.log("PASS: DSH loaded ZCode and plugin skills, and respected disabled settings.");
 } finally {
   await backend.stop();
   server.closeAllConnections();

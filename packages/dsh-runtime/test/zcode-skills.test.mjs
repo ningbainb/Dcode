@@ -74,6 +74,136 @@ test("invalid skill is skipped without hiding other skills", async () => {
   );
 });
 
+test("enabled installed plugin skills reach DSH and follow ZCode plugin state", async () => {
+  const { root, homeDir, workspace } = await fixture();
+  const pluginRoot = join(root, "review-plugin");
+  const pluginSkill = join(pluginRoot, "skills", "plugin-review", "SKILL.md");
+  const pluginStorage = join(homeDir, ".zcode", "cli", "plugins");
+  const configFile = join(homeDir, ".zcode", "cli", "config.json");
+  await mkdir(join(pluginRoot, ".zcode-plugin"), { recursive: true });
+  await mkdir(join(pluginRoot, "skills", "plugin-review"), { recursive: true });
+  await mkdir(pluginStorage, { recursive: true });
+  await writeFile(
+    join(pluginRoot, ".zcode-plugin", "plugin.json"),
+    JSON.stringify({ name: "review-plugin" }),
+  );
+  await writeFile(
+    pluginSkill,
+    "---\nname: plugin-review\ndescription: Plugin review.\n---\nPLUGIN_REVIEW_BODY\n",
+  );
+  await writeFile(
+    join(pluginStorage, "installed_plugins.json"),
+    JSON.stringify({
+      plugins: [
+        { id: "review-plugin@test-market", marketplace: "test-market", installPath: pluginRoot },
+      ],
+    }),
+  );
+  await writeFile(
+    configFile,
+    JSON.stringify({ plugins: { enabledPlugins: { "review-plugin@test-market": true } } }),
+  );
+  const provider = createZcodeSkillProvider({ homeDir });
+  const first = await provider.list({ cwd: workspace });
+  const candidate = first.candidates.find((item) => item.name === "plugin-review");
+  assert.ok(candidate);
+  assert.equal(candidate.source, "plugin-zcode");
+  assert.match((await provider.get(candidate, { cwd: workspace })).content, /PLUGIN_REVIEW_BODY/);
+  await writeFile(
+    configFile,
+    JSON.stringify({ plugins: { enabledPlugins: { "review-plugin@test-market": false } } }),
+  );
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some(
+      (item) => item.name === "plugin-review",
+    ),
+    false,
+  );
+  assert.equal(await provider.get(candidate, { cwd: workspace }), undefined);
+});
+
+test("plugin skill manifest cannot escape its plugin root and global disable applies", async () => {
+  const { root, homeDir, workspace } = await fixture();
+  const pluginRoot = join(root, "unsafe-plugin");
+  const escapedSkill = join(root, "escaped", "SKILL.md");
+  const configFile = join(homeDir, ".zcode", "cli", "config.json");
+  await mkdir(join(pluginRoot, ".claude-plugin"), { recursive: true });
+  await mkdir(join(root, "escaped"), { recursive: true });
+  await mkdir(join(homeDir, ".zcode", "cli"), { recursive: true });
+  await writeFile(
+    join(pluginRoot, ".claude-plugin", "plugin.json"),
+    JSON.stringify({ name: "unsafe-plugin", skills: "../escaped" }),
+  );
+  await writeFile(escapedSkill, "---\nname: escaped\ndescription: Escape.\n---\nNever load.\n");
+  await writeFile(configFile, JSON.stringify({ plugins: { dirs: [pluginRoot] } }));
+  const provider = createZcodeSkillProvider({ homeDir });
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some((item) => item.name === "escaped"),
+    false,
+  );
+  await writeFile(
+    join(pluginRoot, ".claude-plugin", "plugin.json"),
+    JSON.stringify({ name: "unsafe-plugin", skills: "skills" }),
+  );
+  await mkdir(join(pluginRoot, "skills", "valid"), { recursive: true });
+  await writeFile(
+    join(pluginRoot, "skills", "valid", "SKILL.md"),
+    "---\nname: valid-plugin\ndescription: Valid.\n---\nLoad me.\n",
+  );
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some(
+      (item) => item.name === "valid-plugin",
+    ),
+    true,
+  );
+  await writeFile(configFile, JSON.stringify({ plugins: { enabled: false, dirs: [pluginRoot] } }));
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some(
+      (item) => item.name === "valid-plugin",
+    ),
+    false,
+  );
+});
+
+test("official default plugin skills disappear when the plugin is suppressed", async () => {
+  const { homeDir, workspace } = await fixture();
+  const pluginRoot = join(
+    homeDir,
+    ".zcode",
+    "cli",
+    "plugins",
+    "cache",
+    "zcode-plugins-official",
+    "documents",
+    "1.0.0",
+  );
+  const configFile = join(homeDir, ".zcode", "cli", "config.json");
+  await mkdir(join(pluginRoot, ".codex-plugin"), { recursive: true });
+  await mkdir(join(pluginRoot, "skills", "doc-review"), { recursive: true });
+  await writeFile(
+    join(pluginRoot, ".codex-plugin", "plugin.json"),
+    JSON.stringify({ name: "documents" }),
+  );
+  await writeFile(
+    join(pluginRoot, "skills", "doc-review", "SKILL.md"),
+    "---\nname: doc-review\ndescription: Document review.\n---\nCheck docs.\n",
+  );
+  const provider = createZcodeSkillProvider({ homeDir });
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some((item) => item.name === "doc-review"),
+    true,
+  );
+  await mkdir(join(homeDir, ".zcode", "cli"), { recursive: true });
+  await writeFile(
+    configFile,
+    JSON.stringify({ plugins: { suppressedBuiltins: ["documents@zcode-plugins-official"] } }),
+  );
+  assert.equal(
+    (await provider.list({ cwd: workspace })).candidates.some((item) => item.name === "doc-review"),
+    false,
+  );
+});
+
 test("creating the ZCode enable config invalidates DSH's complete catalog", async () => {
   const { homeDir, workspace, projectSkill } = await fixture();
   let invalidations = 0;
