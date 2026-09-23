@@ -2,6 +2,8 @@
 
 Dcode 将 ZCode 的桌面工作区能力与 DeepSeek Harness（DSH）的 Agent 执行能力连接起来。这里的「融合」指同一项目里的任务、消息、工具结果与文件工作区使用同一条真实执行链路，不只是换图标或嵌入一个独立聊天窗口。
 
+当前发行版以 Windows x64 为验收范围；macOS 和 Linux 的适配边界与验收步骤见 [跨平台计划](DCode-PLATFORM-PLAN.md)。
+
 ```mermaid
 flowchart LR
   UI[项目 / 任务列表 / 聊天界面] --> S[DSH 服务适配层]
