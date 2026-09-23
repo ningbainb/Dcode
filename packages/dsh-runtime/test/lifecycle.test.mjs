@@ -68,6 +68,7 @@ test("concurrent startup shares one controller and authenticates before ready", 
       assert.equal((await stat(privateTemp)).isDirectory(), true);
       assert.equal(launchOptions.environmentProvider().TEMP, privateTemp);
       assert.equal(launchOptions.environmentProvider().TMP, privateTemp);
+      assert.equal(launchOptions.startupTimeoutMs, 240_000);
       assert.notEqual(privateTemp, process.env.TEMP);
     }
     await runtime.stop();

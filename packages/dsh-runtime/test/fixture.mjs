@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-export async function createFixture(root) {
+export async function createFixture(root, { writeSettings = true } = {}) {
 const workspace = join(root, 'project');
 await mkdir(workspace, { recursive: true });
 await mkdir(join(root, 'dsh'), { recursive: true });
@@ -71,7 +71,7 @@ const server = createServer(async (request, response) => {
   } catch (error) { response.destroy(error); }
 });
 await new Promise(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
-await writeFile(join(root, 'dsh', 'settings.yaml'), JSON.stringify({ 'llm-pi-ai': { providers: {
+if (writeSettings) await writeFile(join(root, 'dsh', 'settings.yaml'), JSON.stringify({ 'llm-pi-ai': { providers: {
   'dcode-fixture': { displayName: 'DCode Local Fixture', apiKeyEnv: 'DCODE_FIXTURE_KEY',
     api: 'openai-completions', baseURL: `http://127.0.0.1:${server.address().port}/v1`,
     models: [{ id: 'dcode-fixture', name: 'DCode Fixture', contextWindow: 100000, maxTokens: 4096 }],

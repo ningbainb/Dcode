@@ -10,6 +10,7 @@ export type {
 export type {
   DshRuntimeHealth,
   DshModel,
+  DshImageInput,
   DshSession,
   DshImportedZcodeSession,
   DshZcodeImportCandidate,

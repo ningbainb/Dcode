@@ -84,6 +84,8 @@ export class DshLifecycle extends EventEmitter {
         profileName: PROFILE_NAME,
         executable: this.executable,
         preferredPort: 0,
+        // Windows cold starts may spend over two minutes loading the DSH profile and plugins.
+        startupTimeoutMs: process.platform === "win32" ? 240_000 : 120_000,
         runtimeHost: "127.0.0.1",
         autoRestart: false,
         logStore: {

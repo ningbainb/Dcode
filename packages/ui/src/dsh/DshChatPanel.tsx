@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type {
   DshModel,
+  DshImageInput,
   DshRuntimeHealth,
   DshSessionAnnotation,
   DshSessionAnnotationInput,
@@ -11,7 +12,7 @@ import { useSettings } from "@/hooks/useSettingService.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
-import { ArrowUp, FileDiff, FolderOpen, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowUp, FileDiff, FolderOpen, ImagePlus, ShieldCheck, Sparkles, X } from "lucide-react";
 import appLogoUrl from "@/assets/dcode-logo.png";
 import { emptyProjection, projectFrame, record, type DshRow } from "./projection.js";
 import { getDshCopy } from "./dshCopy.js";
@@ -24,6 +25,41 @@ import { ImportedZcodeChatPanel } from "./ImportedZcodeChatPanel.js";
 import { needsWindowsAclRepair } from "./windowsAclRepair.js";
 
 const EMPTY_ANNOTATIONS: DshSessionAnnotation[] = [];
+const IMAGE_TYPES = new Set<DshImageInput["mediaType"]>([
+  "image/png", "image/jpeg", "image/webp", "image/gif",
+]);
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_IMAGE_COUNT = 20;
+const MAX_IMAGE_TOTAL_BYTES = 200 * 1024 * 1024;
+
+async function encodeImage(file: File): Promise<DshImageInput> {
+  const data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read image."));
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1] ?? "");
+    reader.readAsDataURL(file);
+  });
+  return { mediaType: file.type as DshImageInput["mediaType"], data, name: file.name };
+}
+
+function ImageDraftItem({ file, remove, zh }: { file: File; remove: () => void; zh: boolean }) {
+  const [preview, setPreview] = useState("");
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return (
+    <span className="flex max-w-52 items-center gap-1.5 rounded-lg border border-border/70 bg-background/60 p-1 text-ui-xs">
+      {preview && <img src={preview} alt="" className="size-8 rounded object-cover" />}
+      <span className="min-w-0 truncate" title={file.name}>{file.name}</span>
+      <button type="button" aria-label={zh ? `移除 ${file.name}` : `Remove ${file.name}`} onClick={remove}
+        className="rounded p-1 text-foreground-subtle hover:bg-surface-hover hover:text-foreground">
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
 
 export function DshChatPanel(props: {
   workspacePath: string;
@@ -69,6 +105,8 @@ function DshLiveChatPanel({
   const [models, setModels] = useState<DshModel[]>([]);
   const [modelKey, setModelKey] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [imageDrafts, setImageDrafts] = useState<Record<string, File[]>>({});
+  const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
   const [projection, setProjection] = useState(emptyProjection);
   const [error, setError] = useState("");
   const [aclRepairBusy, setAclRepairBusy] = useState(false);
@@ -86,8 +124,10 @@ function DshLiveChatPanel({
   const loadedSessionRef = useRef("");
   const bottom = useRef<HTMLDivElement>(null);
   const composerInputRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const currentDraftKey = draftScopeKey(workspacePath, selectedSessionId);
   const draft = drafts[currentDraftKey] ?? "";
+  const images = imageDrafts[currentDraftKey] ?? [];
   const setDraft = (value: string | ((previous: string) => string)) => {
     setDrafts((previous) => {
       const oldText = previous[currentDraftKey] ?? "";
@@ -269,6 +309,7 @@ function DshLiveChatPanel({
     }
   }
   useEffect(() => {
+    setImagePreview(null);
     const key = selectedSessionId ? `${workspacePath}\0${selectedSessionId}` : "";
     if (!key) {
       loadedSessionRef.current = "";
@@ -282,11 +323,42 @@ function DshLiveChatPanel({
     }
     if (selectedSessionId && loadedSessionRef.current !== key) void openSession(selectedSessionId);
   }, [selectedSessionId, workspacePath]);
+  function attachImages(files: FileList | null) {
+    if (!files?.length) return;
+    const additions = Array.from(files);
+    if (additions.some((file) => !IMAGE_TYPES.has(file.type as DshImageInput["mediaType"]))) {
+      setError(zh ? "仅支持 PNG、JPEG、WebP 和 GIF 图片。" : "Choose PNG, JPEG, WebP or GIF images.");
+      return;
+    }
+    if (additions.some((file) => file.size < 1 || file.size > MAX_IMAGE_BYTES)) {
+      setError(zh ? "单张图片不能超过 20 MiB。" : "Each image must be 20 MiB or smaller.");
+      return;
+    }
+    if (images.length + additions.length > MAX_IMAGE_COUNT ||
+        [...images, ...additions].reduce((sum, file) => sum + file.size, 0) > MAX_IMAGE_TOTAL_BYTES) {
+      setError(zh ? "最多 20 张图片，总大小不超过 200 MiB。" : "Choose at most 20 images, up to 200 MiB total.");
+      return;
+    }
+    setError("");
+    setImageDrafts((old) => ({ ...old, [currentDraftKey]: [...(old[currentDraftKey] ?? []), ...additions] }));
+  }
+  async function openImageAttachment(attachmentId: string, name?: string) {
+    if (!service || !selectedSessionId) return;
+    const scope = workspacePath;
+    const id = selectedSessionId;
+    try {
+      const result = await service.readImageAttachment(id, attachmentId);
+      if (selection.current.workspacePath !== scope || selection.current.sessionId !== id) return;
+      setImagePreview({ url: `data:${result.attachment.mediaType};base64,${result.data}`,
+        name: name ?? result.attachment.name ?? (zh ? "图片" : "Image") });
+    } catch (failure) { report(failure); }
+  }
   async function send() {
-    if (!service || !draft.trim() || pending) return;
+    if (!service || (!draft.trim() && images.length === 0) || pending) return;
     const sourceScope = workspacePath;
     const sourceSessionId = selectedSessionId;
     const submittedText = draft;
+    const submittedImages = images;
     const wasBusy = projection.busy;
     const annotationIds = selectedAnnotationIds ?? undefined;
     let sentDraftKey = currentDraftKey;
@@ -306,6 +378,7 @@ function DshLiveChatPanel({
         id = created.id;
         sentDraftKey = draftScopeKey(sourceScope, id);
         setDrafts((old) => promoteDraftToSession(old, currentDraftKey, sentDraftKey));
+        setImageDrafts((old) => ({ ...old, [sentDraftKey]: old[currentDraftKey] ?? [], [currentDraftKey]: [] }));
         // 创建会话返回时用户可能已切走；只在原草稿仍被选中时接管当前界面。
         if (
           selection.current.workspacePath === sourceScope &&
@@ -318,8 +391,12 @@ function DshLiveChatPanel({
       }
       setPending(true);
       // 忙碌时沿用会话正在使用的模型，避免排队输入在当前 turn 中途改模型。
-      await service.sendMessage(id, message, wasBusy ? undefined : model, annotationIds);
+      const encodedImages: DshImageInput[] = [];
+      for (const file of submittedImages) encodedImages.push(await encodeImage(file));
+      await service.sendMessage(id, message, wasBusy ? undefined : model, annotationIds, encodedImages);
       setDrafts((old) => clearDraftIfUnchanged(old, sentDraftKey, submittedText));
+      setImageDrafts((old) => old[sentDraftKey] === submittedImages
+        ? { ...old, [sentDraftKey]: [] } : old);
       const storedAnnotations = await service.listSessionAnnotations(id);
       if (selection.current.workspacePath === sourceScope && selection.current.sessionId === id) {
         setAnnotations(storedAnnotations);
@@ -536,6 +613,18 @@ function DshLiveChatPanel({
                     onDelete={deleteAnnotation}
                     onAsk={askAboutQuote}
                   />
+                  {!!item.images?.length && (
+                    <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dsh-message-images">
+                      {item.images.map((image) => (
+                        <button key={image.attachmentId} type="button"
+                          className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/50 px-2 py-1 text-ui-xs text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
+                          onClick={() => void openImageAttachment(image.attachmentId, image.name)}>
+                          <ImagePlus className="size-3.5" />
+                          <span className="max-w-40 truncate">{image.name ?? (zh ? "图片" : "Image")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </article>
             ),
@@ -620,6 +709,11 @@ function DshLiveChatPanel({
           </details>
         )}
         <div className="mx-auto w-full max-w-[840px] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_10px_36px_rgba(0,0,0,0.12)] focus-within:border-foreground-subtle">
+          {!!images.length && <div className="flex flex-wrap gap-1.5 px-3 pt-3" data-testid="dsh-image-drafts">
+            {images.map((file, index) => <ImageDraftItem key={`${file.name}:${index}`} file={file} zh={zh}
+              remove={() => setImageDrafts((old) => ({ ...old,
+                [currentDraftKey]: (old[currentDraftKey] ?? []).filter((_, itemIndex) => itemIndex !== index) }))} />)}
+          </div>}
           <textarea
             ref={composerInputRef}
             data-testid="dsh-message-input"
@@ -642,6 +736,15 @@ function DshLiveChatPanel({
           />
           <div className="flex flex-wrap items-center gap-2 px-3 pb-2.5 pt-1">
             <div className="flex min-w-0 flex-1 items-center gap-2">
+              <input ref={imageInputRef} type="file" className="hidden" multiple
+                accept="image/png,image/jpeg,image/webp,image/gif" aria-label={zh ? "选择图片" : "Choose images"}
+                onChange={(event) => { attachImages(event.target.files); event.target.value = ""; }} />
+              <Button type="button" size="sm" variant="ghost" className="shrink-0 px-2"
+                aria-label={zh ? "添加图片" : "Add images"} data-testid="dsh-add-images"
+                disabled={pending || health.state !== "ready"}
+                onClick={() => imageInputRef.current?.click()}>
+                <ImagePlus className="size-4" />
+              </Button>
               <span
                 data-testid="dsh-current-workspace"
                 title={workspacePath}
@@ -708,7 +811,7 @@ function DshLiveChatPanel({
                 type="submit"
                 size="sm"
                 className="gap-1.5 rounded-lg"
-                disabled={pending || !draft.trim() || health.state !== "ready"}
+                disabled={pending || (!draft.trim() && images.length === 0) || health.state !== "ready"}
               >
                 {projection.busy ? copy.queue : copy.send}
                 <ArrowUp className="size-3.5" />
@@ -720,6 +823,16 @@ function DshLiveChatPanel({
           {copy.hint}
         </p>
       </form>
+      {imagePreview && <div role="dialog" aria-modal="true" aria-label={imagePreview.name}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
+        onClick={() => setImagePreview(null)}>
+        <div className="relative max-h-full max-w-full" onClick={(event) => event.stopPropagation()}>
+          <button type="button" aria-label={zh ? "关闭图片" : "Close image"}
+            className="absolute right-2 top-2 rounded-full bg-background/90 p-2 text-foreground"
+            onClick={() => setImagePreview(null)}><X className="size-4" /></button>
+          <img src={imagePreview.url} alt={imagePreview.name} className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain" />
+        </div>
+      </div>}
     </section>
   );
 }

@@ -13,6 +13,12 @@ export interface DshModel {
   label: string;
 }
 
+export interface DshImageInput {
+  mediaType: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+  data: string;
+  name?: string;
+}
+
 export interface DshSubagentSettingsView {
   maxDepth: number;
   revision: number;
@@ -214,7 +220,12 @@ export interface IDshService {
     message: string,
     model?: DshModel,
     annotationIds?: string[],
+    images?: DshImageInput[],
   ): Promise<void>;
+  readImageAttachment(sessionId: string, attachmentId: string): Promise<{
+    attachment: { mediaType: DshImageInput["mediaType"]; name?: string };
+    data: string;
+  }>;
   cancel(sessionId: string): Promise<void>;
   respondApproval(sessionId: string, requestId: string, approved: boolean): Promise<void>;
   getLogsPath(): Promise<string>;

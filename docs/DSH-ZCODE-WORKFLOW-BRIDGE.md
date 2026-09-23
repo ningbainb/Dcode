@@ -28,11 +28,29 @@ extra runtime queries. An empty filtered result is distinct from an empty
 workspace. Selection remains owned by the existing workspace-session hook. A
 project change resets the filter.
 
+The composer can attach PNG, JPEG, WebP and GIF images using DSH 0.1.7's native
+`session/prompt` image parts. Dcode keeps selected files only in the unsent
+draft for that workspace and session; admission clears the exact draft, while
+failure preserves it. DSH owns image normalization, storage and the durable
+attachment ID. The transcript projects the stored image reference, and opening
+it reads the bytes through DSH `session/attachment` for that same session.
+The picker follows DSH's default limits of 20 MiB per image, 20 images and
+200 MiB per message; DSH remains the final validator. A provider must actually
+support image input for the model request to succeed. Arbitrary files, PDFs
+and videos need the separate DSH file-upload receipt contract and are not
+presented as supported image attachments.
+In DSH 0.1.7, that contract is `fileUploads/upload(sessionId, { data, name })`:
+the result carries an Agent-scoped `receiptId` and durable file reference. A
+subsequent `session/prompt` must include `{ type: "file", receiptId }` for the
+same session. A file picker alone would not deliver the file to the Agent;
+the upload, prompt admission, draft-failure behavior and restored file display
+must be implemented and tested together before exposing this option.
+
 The existing ZCode shell already supplies the project sidebar, file and Git
 surfaces, change viewer, cloud backup settings, theme and typography; DSH does
 not need replacements for those surfaces. DSH-backed conversation annotations,
 plugin toggles, models, approvals and cancellation are already connected through
-their own service contracts. ZCode's legacy task queue editing, attachment
+their own service contracts. ZCode's legacy task queue editing, non-image file
 uploads and CLI-only modes have different accepted-state owners and are not
 silently routed to DSH sessions; each needs a DSH-native capability contract
 before it can be exposed here.
@@ -60,3 +78,6 @@ DSH session list --> sidebar title filter --> visible rows
   selection.
 - Session search filters titles without changing the selected session or
   losing the original list.
+- An image-only prompt reaches the native DSH session; the attachment survives
+  session restoration and can be opened through the same session's attachment
+  route. Invalid images fail without clearing the unsent draft.

@@ -38,6 +38,16 @@ test("history reconstructs tool output and ignores duplicate durable events", ()
   assert.equal(state.rows[0].text, "exit 0");
   assert.deepEqual(projectFrame(state, records[0]), state);
 });
+test("image-only user prompts remain visible when a DSH session is restored", () => {
+  const state = projectFrame(emptyProjection(), { type: "snapshot", records: [
+    event(0, "user/message", { source: { kind: "user" }, content: [
+      { type: "image", attachment: { attachmentId: "image:1", name: "diagram.png" } },
+    ] }),
+  ] });
+  assert.equal(state.rows.length, 1);
+  assert.equal(state.rows[0].text, "");
+  assert.deepEqual(state.rows[0].images, [{ attachmentId: "image:1", name: "diagram.png" }]);
+});
 test("DSH 0.1.7 tool messages keep output and error state across snapshots", () => {
   const records = [
     event(0, "tool/call", { callId: "read-1", name: "read", arguments: "{}" }),

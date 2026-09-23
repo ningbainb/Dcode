@@ -6,6 +6,7 @@ export interface DshRow {
   name?: string;
   input?: string;
   state?: "input-available" | "output-available" | "output-error";
+  images?: Array<{ attachmentId: string; name?: string }>;
 }
 export interface DshProjection {
   rows: DshRow[];
@@ -113,8 +114,16 @@ export function projectFrame(state: DshProjection, input: unknown): DshProjectio
       ? rawText
       : (rawText.split("\n\n# DCode conversation annotations\n", 1)[0] ?? rawText);
     const thinking = textContent(message.content, "reasoning");
-    if (text || thinking)
-      rows.push({ id: `event:${seq}`, kind: assistant ? "assistant" : "user", text, thinking });
+    const images = !assistant && Array.isArray(message.content)
+      ? message.content.map(record).filter((block) => block.type === "image").map((block) => {
+          const attachment = record(block.attachment);
+          return { attachmentId: String(attachment.attachmentId ?? ""),
+            ...(typeof attachment.name === "string" ? { name: attachment.name } : {}) };
+        }).filter((image) => image.attachmentId)
+      : [];
+    if (text || thinking || images.length)
+      rows.push({ id: `event:${seq}`, kind: assistant ? "assistant" : "user", text, thinking,
+        ...(images.length ? { images } : {}) });
     return { ...next, rows };
   }
   if (event.type === "tool/call") {

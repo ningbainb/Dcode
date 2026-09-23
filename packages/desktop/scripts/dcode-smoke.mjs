@@ -100,6 +100,13 @@ try {
   await modelSettings.getByLabel(/^(Base URL|接口地址)$/).fill(`http://127.0.0.1:${server.address().port}/v1`);
   await modelSettings.getByLabel(/^(Model ID|模型 ID)$/).fill('dcode-fixture');
   await modelSettings.getByTestId('model-provider-api-key-input').fill('synthetic-local-test-key');
+  if (process.env.DCODE_TEST_IMAGES === '1') {
+    const advanced = modelSettings.getByTestId('dsh-model-advanced').first();
+    await advanced.locator('summary').click();
+    await advanced.getByRole('combobox').first().click();
+    await page.getByRole('option', { name: /Declare explicitly|手动声明/ }).click();
+    await advanced.getByRole('checkbox', { name: /Images|图片/ }).click();
+  }
   await modelSettings.getByRole('button', { name: /^(Save to DSH|保存到 DSH)$/ }).click();
   await modelSettings.getByText(/已保存到 DSH|Saved to DSH/).waitFor({ timeout: 30000 });
   assert.equal(await modelSettings.getByTestId('model-provider-api-key-input').inputValue(), '');
@@ -169,6 +176,25 @@ try {
     await page.waitForTimeout(100);
   }
   await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
+  if (process.env.DCODE_TEST_IMAGES === '1') {
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      chat.getByTestId('dsh-add-images').click(),
+    ]);
+    await chooser.setFiles(resolve(desktop, '../../docs/assets/dcode-icon.png'));
+    await chat.getByTestId('dsh-image-drafts').getByText('dcode-icon.png').waitFor();
+    await capture(page, '06-image-draft.png');
+    await chat.getByTestId('dsh-send').click();
+    const image = chat.getByTestId('dsh-message-images').last().getByRole('button', { name: 'dcode-icon.png' });
+    await image.waitFor({ timeout: 30000 });
+    await image.click();
+    const preview = page.getByRole('dialog', { name: 'dcode-icon.png' });
+    await preview.getByRole('img', { name: 'dcode-icon.png' }).waitFor();
+    assert.match(await preview.getByRole('img', { name: 'dcode-icon.png' }).getAttribute('src'), /^data:image\/png;base64,/);
+    await capture(page, '07-image-preview.png');
+    await preview.getByRole('button', { name: /Close image|关闭图片/ }).click();
+    await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 30000 });
+  }
   await writeFile(userMcpConfigPath, JSON.stringify({ ...userMcpConfig, command: { [commandPath]: { enable: false } } }));
   await chat.getByTestId('dsh-message-input').fill('/review blocked');
   await chat.getByTestId('dsh-send').click();

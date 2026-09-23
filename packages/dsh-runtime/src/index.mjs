@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The DSH adapter keeps its transport command surface in one class. */
 import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
 import { realpath, stat } from "node:fs/promises";
@@ -24,6 +25,7 @@ import {
 } from "./agent-plugins.mjs";
 import { readMcpServerSettings, writeMcpServerSettings } from "./mcp-servers.mjs";
 import { grantWindowsWorkspaceOwnerRight } from "./windows-workspace-acl.mjs";
+import { imagePromptParts } from "./prompt-images.mjs";
 
 export class DshBackend extends EventEmitter {
   constructor(options) {
@@ -362,8 +364,9 @@ export class DshBackend extends EventEmitter {
       clearTimeout(timeout);
     }
   }
-  async sendMessage(sessionId, message, model, annotationIds) {
-    if (!message.trim()) throw new Error("Enter a message first.");
+  async sendMessage(sessionId, message, model, annotationIds, images) {
+    const imageParts = imagePromptParts(images);
+    if (!message.trim() && imageParts.length === 0) throw new Error("Enter a message or attach an image first.");
     await this.start();
     if (!this.followers.has(sessionId)) await this.resumeSession(sessionId);
     if (model) await this.selectModel(sessionId, model);
@@ -373,7 +376,12 @@ export class DshBackend extends EventEmitter {
         requestId: randomUUID(),
         sessionId,
         mode: "queue",
-        content: [{ type: "text", text: buildPromptWithSessionAnnotations(message, annotations) }],
+        content: [
+          ...(message.trim() || annotations.length
+            ? [{ type: "text", text: buildPromptWithSessionAnnotations(message, annotations) }]
+            : []),
+          ...imageParts,
+        ],
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
     });
@@ -384,6 +392,10 @@ export class DshBackend extends EventEmitter {
   }
   async cancel(sessionId) {
     await this.transport.call("session/cancel", { request: { sessionId } });
+  }
+  async readImageAttachment(sessionId, attachmentId) {
+    await this.start();
+    return this.transport.call("session/attachment", { request: { sessionId, attachmentId } });
   }
   async respondApproval(sessionId, requestId, approved) {
     const pending = this.pendingApprovals.get(requestId);

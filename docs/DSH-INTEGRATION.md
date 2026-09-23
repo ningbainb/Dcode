@@ -18,6 +18,8 @@ DSH 是会话、消息、模型执行、工具调用和权限请求的事实来�
 
 文件操作与命令执行由 DSH 工具完成，Dcode 原有文件、终端和 Git/Diff 界面用于查看真实文件状态。工具卡片展示执行目标、状态及输出，文件变化仍应以磁盘和 Git Diff 为准。GitHub 云备份由独立服务负责，按项目当前磁盘内容制作快照，不依赖模型的口头声明。
 
+聊天输入可将 PNG、JPEG、WebP、GIF 图片通过 DSH 原生 `session/prompt` 发送；DSH 保存附件，会话恢复时显示图片条目，点击后经同一会话的 `session/attachment` 读取。普通文件、PDF 和视频尚未接入 DSH 文件上传回执协议，不能按图片入口发送。
+
 当前桌面功能在 Windows 打包应用里用本地合成模型夹具通过了双会话、项目切换、重启恢复、停止继续、工具输出、文件编辑、Diff 和终端验收。这个测试证明桌面到运行时的本地链路，不证明某个在线模型账号或所有提供商已经实测。[模型供应商设置](DSH-MODEL-PROVIDER-SETTINGS.md) 复用 ZCode 的交互语言并保存到 DSH Profile。Dcode 的 MCP 设置由 DSH Profile 托管，详见 [MCP 接入](DSH-MCP-SERVERS.md)。ZCode 工作区、用户级 `.zcode/skills` 和已启用插件贡献的 Markdown 技能已通过 [DSH 技能提供器](DSH-ZCODE-SKILLS.md) 接入；已启用的 ZCode Markdown 自定义命令也可在 DSH 会话输入框调用，详见 [命令接入](DSH-ZCODE-COMMANDS.md)。本地桌面的设置侧边栏保留对应的“技能”“命令”管理入口，写入同一份 ZCode 文件和启用配置。[子智能体设置](DSH-SUBAGENTS.md) 控制 DSH 原生委派深度。插件的其他组件及 ZCode 的记忆、自定义子智能体文件、自动化和钩子设置尚未逐项验证能控制 DSH 执行，本地 DSH 工作区不把它们宣传为已贯通能力。
 
 实现与契约可从 [DSH 运行时](../packages/dsh-runtime/CONTRACT.md)、[工作区会话](../packages/ui/src/dsh/CONTRACT.md) 和 [云备份](../packages/services/src/cloud-backup/CONTRACT.md) 开始阅读。移植代码的上游修订与许可证见 [PROVENANCE.md](../packages/dsh-runtime/vendor/PROVENANCE.md)。

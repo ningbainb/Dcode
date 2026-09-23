@@ -9,6 +9,11 @@ export interface Model {
   model: string;
   label: string;
 }
+export interface ImageInput {
+  mediaType: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+  data: string;
+  name?: string;
+}
 export interface SubagentSettingsView {
   maxDepth: number;
   revision: number;
@@ -167,7 +172,12 @@ export class DshBackend extends EventEmitter {
     message: string,
     model?: Model,
     annotationIds?: string[],
+    images?: ImageInput[],
   ): Promise<void>;
+  readImageAttachment(sessionId: string, attachmentId: string): Promise<{
+    attachment: { mediaType: ImageInput["mediaType"]; name?: string };
+    data: string;
+  }>;
   cancel(sessionId: string): Promise<void>;
   respondApproval(sessionId: string, requestId: string, approved: boolean): Promise<void>;
 }

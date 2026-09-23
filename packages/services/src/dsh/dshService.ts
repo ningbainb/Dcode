@@ -69,8 +69,10 @@ export function createDshService(autoStart = false): IDshService {
       (await backend).deleteSessionAnnotation(id, annotationId),
     deleteMessageAnnotations: async (id, messageId) =>
       (await backend).deleteMessageAnnotations(id, messageId),
-    sendMessage: async (id, text, model, annotationIds) =>
-      (await backend).sendMessage(id, text, model, annotationIds),
+    sendMessage: async (id, text, model, annotationIds, images) =>
+      (await backend).sendMessage(id, text, model, annotationIds, images),
+    readImageAttachment: async (id, attachmentId) =>
+      (await backend).readImageAttachment(id, attachmentId),
     cancel: async (id) => (await backend).cancel(id),
     respondApproval: async (id, requestId, approved) =>
       (await backend).respondApproval(id, requestId, approved),
