@@ -20,4 +20,6 @@ without caller-provided `ZCODE_ENV`: the unpacked application displays “Check 
 updates”, `app-update.yml` targets `ningbainb/Dcode`, and a packaged smoke test
 passes. The true older-version-to-newer-version update path still needs a live
 GitHub release test; local metadata consistency alone cannot prove download and
-installation.
+installation. For v0.2.5, an isolated v0.2.4 application discovered the release,
+downloaded an installer with the published SHA-256, and reached restart-to-update.
+The installer was not run, so the final replacement/restart path remains unverified.
