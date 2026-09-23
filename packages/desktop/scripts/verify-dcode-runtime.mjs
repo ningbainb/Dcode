@@ -13,16 +13,20 @@ export function verifyDcodeRuntime(runtimeRoot) {
       `
     import assert from 'node:assert/strict';
     import { createRequire } from 'node:module';
+    import { readFileSync } from 'node:fs';
     import { fileURLToPath, pathToFileURL } from 'node:url';
     await import(process.argv[1]);
     const require = createRequire(process.argv[1]);
     const root = fileURLToPath(new URL('../', process.argv[1]));
-    for (const name of ['ws', 'yaml', '@deepseek-ai/dsh/lib/bin.js', '@deepseek-ai/dsh-base/package.json', '@deepseek-ai/dsh-web-app/package.json', '@deepseek-ai/dsh-mcp-client/package.json', '@playwright/mcp/package.json']) {
+    for (const name of ['ws', 'yaml', 'chokidar', '@deepseek-ai/dsh/lib/bin.js', '@deepseek-ai/dsh-base/package.json', '@deepseek-ai/dsh-web-app/package.json', '@deepseek-ai/dsh-mcp-client/package.json', '@playwright/mcp/package.json']) {
       assert.ok(require.resolve(name).startsWith(root), name + ' must resolve inside the packaged runtime');
     }
+    assert.equal(JSON.parse(readFileSync(new URL('./package.json', pathToFileURL(require.resolve('chokidar'))), 'utf8')).version, '5.0.0');
     for (const name of ['@deepseek-ai/dsh-plugin-manager', '@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']) await import(pathToFileURL(require.resolve(name)).href);
     const bridge = await import(new URL('../vendor/dcode-zcode-session-import/index.mjs', process.argv[1]).href);
     assert.equal(bridge.name, 'dcode-zcode-session-import');
+    const skills = await import(new URL('../vendor/dcode-zcode-skills/index.mjs', process.argv[1]).href);
+    assert.equal(skills.name, 'dcode-zcode-skills');
     console.log('DCode physical runtime dependency verification passed');
   `,
       entry,

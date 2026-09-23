@@ -1,6 +1,8 @@
 const NAMESPACE = "llm-pi-ai";
 const PROVIDER_ID = /^[a-z][a-z0-9-]{0,63}$/;
 const APIS = new Set(["openai-completions", "openai-responses", "anthropic-messages"]);
+const MODALITIES = new Set(["text", "image"]);
+const REASONING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 function object(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -59,11 +61,45 @@ export function validateProviderDraft(draft) {
       maxTokens > contextWindow
     )
       throw new Error(`Check the context and output token limits for ${modelId}.`);
+    let input;
+    if (model.input !== undefined) {
+      if (
+        !Array.isArray(model.input) ||
+        !model.input.includes("text") ||
+        new Set(model.input).size !== model.input.length ||
+        model.input.some((modality) => !MODALITIES.has(modality))
+      )
+        throw new Error(`Check the input modalities for ${modelId}.`);
+      input = model.input;
+    }
+    let reasoningEfforts;
+    if (model.reasoningEfforts !== undefined) {
+      if (model.reasoningEfforts === false) reasoningEfforts = false;
+      else {
+        const efforts = object(model.reasoningEfforts);
+        if (
+          Object.keys(efforts).length === 0 ||
+          !Object.keys(efforts).some((level) => level !== "off") ||
+          Object.entries(efforts).some(
+            ([level, wire]) =>
+              !REASONING_LEVELS.has(level) ||
+              (level === "off"
+                ? wire !== null && typeof wire !== "string"
+                : typeof wire !== "string" || !wire.trim()),
+          )
+        )
+          throw new Error(`Check the reasoning efforts for ${modelId}.`);
+        reasoningEfforts = efforts;
+      }
+    }
     return {
       id: modelId,
       name: String(model.name ?? "").trim() || modelId,
       contextWindow,
       maxTokens,
+      // 显式 undefined 覆盖旧模型字段，允许从自定义能力恢复为 DSH 目录继承。
+      input,
+      reasoningEfforts,
     };
   });
   return { id, name, api, baseURL, models: normalized, apiKey: String(draft.apiKey ?? "").trim() };
@@ -92,6 +128,10 @@ export async function listDshProviderSettings(transport) {
             name: String(model.name ?? model.id ?? ""),
             contextWindow: Number(model.contextWindow ?? 128000),
             maxTokens: Number(model.maxTokens ?? 8192),
+            ...(Array.isArray(model.input) && model.input.length ? { input: model.input } : {}),
+            ...(model.reasoningEfforts !== undefined
+              ? { reasoningEfforts: model.reasoningEfforts }
+              : {}),
           }))
         : [],
       hasApiKey: Boolean(credentials[credentialRef(id, profile)]?.configured),

@@ -67,6 +67,12 @@ export interface DshProviderModelSettings {
   name: string;
   contextWindow: number;
   maxTokens: number;
+  input?: Array<"text" | "image">;
+  reasoningEfforts?:
+    | false
+    | Partial<
+        Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max", string | null>
+      >;
 }
 
 export interface DshProviderSettings {

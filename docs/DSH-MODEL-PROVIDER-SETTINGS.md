@@ -31,3 +31,9 @@ If settings or credential persistence fails, report the failure and keep the dra
 - Native DeepSeek model identities are visible; custom model order is retained after save and refresh.
 - Missing keys, invalid URLs/model IDs, and stale revisions produce clear feedback; keys are not returned to the UI.
 - Desktop UI smoke and an isolated DSH settings round-trip verify the user path.
+
+## Advanced model capabilities
+
+The per-model advanced section follows the existing ZCode model editor's grouping and controls while writing only fields supported by the installed DSH `llm-pi-ai` profile. `input` may be inherited from DSH's model catalog or explicitly declared as text with optional image. The UI must not offer video/PDF as DSH input modalities. Image support is a user claim about the endpoint; the editor does not probe an API. `reasoningEfforts` may be inherited, explicitly disabled, or configured as a nonempty set of levels and wire values. Custom levels cannot contain only `off`, and enabled levels need nonempty wire values. Existing unedited DSH model fields must survive the save-by-ID merge. Choosing inheritance again clears the previous override.
+
+The DSH profile remains the sole saved-state owner. The renderer holds the advanced controls only in its unsaved draft, and the same revision-checked `saveProvider` command writes them. Acceptance additionally covers a real DSH round-trip of image and reasoning settings, validation of invalid claims, and an Electron UI path through advanced settings.

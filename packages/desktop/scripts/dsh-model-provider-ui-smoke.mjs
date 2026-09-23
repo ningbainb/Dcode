@@ -33,6 +33,7 @@ document.documentElement.className='dark theme-zai-dark';
 let revision=0;
 let providers=[{id:'deepseek-official',name:'DeepSeek',api:'native',baseURL:'',models:[{id:'deepseek-flash',name:'DeepSeek Flash',contextWindow:1000000,maxTokens:256000}],hasApiKey:false,builtIn:true}];
 const calls:string[]=[];(window as any).__providerCalls=calls;
+(window as any).__providerSettings=()=>structuredClone(providers);
 const dshService={
   listProviderSettings:async()=>({revision,writable:true,providers:structuredClone(providers)}),
   saveProvider:async(draft:any,expected:number,creating:boolean)=>{if(expected!==revision)throw Error('stale');calls.push('save:'+draft.id+':'+draft.models.map((model:any)=>model.id).join(',')+':'+creating);providers=[...providers.filter(p=>p.id!==draft.id),{...draft,hasApiKey:!!draft.apiKey,builtIn:false}];revision++},
@@ -115,6 +116,14 @@ try {
   assert.equal(await page.getByLabel("接口地址").inputValue(), "https://api.openai.com/v1");
   assert.equal(await page.locator('datalist option[value="gpt-6-astra"]').count(), 1);
   await page.getByLabel("模型 ID").fill("first-model");
+  const advanced = page.getByTestId("dsh-model-advanced").first();
+  await advanced.locator("summary").click();
+  await advanced.getByRole("combobox").first().click();
+  await page.getByRole("option", { name: "手动声明" }).click();
+  await advanced.getByRole("checkbox", { name: "图片" }).click();
+  await advanced.getByRole("combobox").nth(1).click();
+  await page.getByRole("option", { name: "自定义档位" }).click();
+  await advanced.getByLabel("low · 接口参数值").fill("low-wire");
   await page.getByRole("button", { name: "添加模型" }).click();
   await page.getByLabel("模型 ID").nth(1).fill("second-model");
   await page.getByRole("button", { name: "下移模型 1" }).click();
@@ -122,6 +131,11 @@ try {
   await page.waitForFunction(() =>
     window.__providerCalls.includes("save:openai:second-model,first-model:true"),
   );
+  const saved = await page.evaluate(() =>
+    window.__providerSettings().find((item) => item.id === "openai"),
+  );
+  assert.deepEqual(saved.models[1].input, ["text", "image"]);
+  assert.equal(saved.models[1].reasoningEfforts.low, "low-wire");
   await page.getByTestId("dsh-provider-nav-item").filter({ hasText: "OpenAI" }).waitFor();
   await page.screenshot({ path: join(output, "dsh-model-provider-settings.png"), fullPage: true });
   await page.evaluate(() => {

@@ -20,7 +20,14 @@ try {
       baseURL: "http://127.0.0.1:4321/v1",
       apiKey: "synthetic-test-key",
       models: [
-        { id: "first", name: "First", contextWindow: 32000, maxTokens: 4096 },
+        {
+          id: "first",
+          name: "First",
+          contextWindow: 32000,
+          maxTokens: 4096,
+          input: ["text", "image"],
+          reasoningEfforts: { off: null, low: "low", high: "high" },
+        },
         { id: "second", name: "Second", contextWindow: 64000, maxTokens: 8192 },
       ],
     },
@@ -34,6 +41,15 @@ try {
   assert.equal(
     created.providers.find((provider) => provider.id === "local-gateway")?.hasApiKey,
     true,
+  );
+  assert.deepEqual(
+    created.providers.find((provider) => provider.id === "local-gateway")?.models[0]?.input,
+    ["text", "image"],
+  );
+  assert.deepEqual(
+    created.providers.find((provider) => provider.id === "local-gateway")?.models[0]
+      ?.reasoningEfforts,
+    { off: null, low: "low", high: "high" },
   );
   assert.ok(!JSON.stringify(created).includes("synthetic-test-key"));
   assert.ok(

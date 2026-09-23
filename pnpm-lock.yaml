@@ -802,6 +802,9 @@ importers:
       '@playwright/mcp':
         specifier: 0.0.82
         version: 0.0.82
+      chokidar:
+        specifier: 5.0.0
+        version: 5.0.0
       ws:
         specifier: 8.20.0
         version: 8.20.0

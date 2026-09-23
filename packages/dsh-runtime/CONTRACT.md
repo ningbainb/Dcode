@@ -19,6 +19,12 @@ Runtime lifecycle is reused from DeepSeek Harness Desktop at commit
 with their license. DCode supplies a minimal profile composed from official NPM packages.
 No upstream DSH source is modified. No existing DSH user profile is read or written.
 
+The Dcode profile also mounts a read-only ZCode skill provider. It discovers
+workspace and user `.zcode/skills` files, honors the ZCode CLI disabled-path
+map, and invalidates DSH's native skill catalog when these files change.
+DSH keeps ownership of invocation, precedence, and the model-facing `skill`
+tool. See `docs/DSH-ZCODE-SKILLS.md`.
+
 The Dcode Agent plugin state is owned by `DshBackend` in its own data directory.
 An opt-in Playwright MCP server provides isolated browser control. An opt-in
 Windows GUI MCP server provides Windows UI Automation after installing its
@@ -55,6 +61,9 @@ Packaging keeps the physical DSH deployment outside app.asar. The application ar
 contains only the desktop package's external production dependency closure; workspace
 UI/service source dependencies are already bundled and must not pull a duplicate DSH
 or browser dependency tree into the archive. Existing native/closure checks still run.
+When the runtime dependency manifest changes, deploy to a fresh versioned physical
+directory before packaging; copying new source over an old deployment would leave its
+`node_modules` stale. The builder and preparation script must use the same directory.
 Before packaging, validate renderer entry references and record its complete file list.
 After packaging, verify every renderer file is present in app.asar. Windows executable
 resources use DCode branding and version 0.1.0 while retaining upstream legal notices.
@@ -66,6 +75,7 @@ The physical runtime node_modules directory is an explicit resource root, bypass
 Electron Builder's default exclusion of nested node_modules. Its bundled Node executable
 must load the backend and resolve all entry dependencies strictly inside the shipped directory.
 The packaging gate also imports official runtime plugins, detecting corrupted transitive JavaScript before Desktop launch.
+
 # Conversation annotations
 
 `DshBackend` owns persisted annotations keyed by DSH session ID and durable

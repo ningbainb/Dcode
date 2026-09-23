@@ -13,16 +13,22 @@ export const PROFILE_NAME = "dcode";
 export async function ensureDcodeProfile(dshHome, nodeExecutable = process.execPath) {
   const profileDir = join(dshHome, "profiles", PROFILE_NAME);
   await mkdir(profileDir, { recursive: true });
-  const bridgeName = "dcode-zcode-session-import";
-  const bridgeRoot = fileURLToPath(
-    new URL("../vendor/dcode-zcode-session-import/", import.meta.url),
-  );
-  const bundles = ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", bridgeName];
+  const localBundles = {
+    "dcode-zcode-session-import": fileURLToPath(
+      new URL("../vendor/dcode-zcode-session-import/", import.meta.url),
+    ),
+    "dcode-zcode-skills": fileURLToPath(new URL("../vendor/dcode-zcode-skills/", import.meta.url)),
+  };
+  const bundles = [
+    "@deepseek-ai/dsh-base",
+    "@deepseek-ai/dsh-web-app",
+    ...Object.keys(localBundles),
+  ];
   const linkedPackages = [...bundles, "@deepseek-ai/dsh-mcp-client"];
   const packageRoots = Object.fromEntries(
     linkedPackages.map((name) => [
       name,
-      name === bridgeName ? bridgeRoot : dirname(require.resolve(`${name}/package.json`)),
+      localBundles[name] ?? dirname(require.resolve(`${name}/package.json`)),
     ]),
   );
   const dependencies = Object.fromEntries(

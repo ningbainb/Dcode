@@ -44,7 +44,7 @@ pnpm dev:desktop
 
 `bootstrap` 会准备依赖及桌面运行资源，首次执行可能需要下载额外组件。在 Windows 上执行 `pnpm build:desktop` 后，可用 `pnpm pack:dcode` 生成 NSIS 安装包、`latest.yml` 和 blockmap；用 `pnpm verify:dcode-release` 核对元数据与安装包。当前安装包未签名。
 
-可在 [GitHub Releases 下载 v0.2.3 Windows x64 测试安装包](https://github.com/ningbainb/Dcode/releases/tag/v0.2.3)。v0.2.1 用户需先手动安装 v0.2.2 或更新版本；v0.2.2 用户可在应用内检查更新。安装及真实账号的在线链路尚待验收，使用前请阅读[发行说明与 SHA-256](docs/releases/v0.2.3.md)。
+可在 [GitHub Releases 下载 v0.2.4 Windows x64 测试安装包](https://github.com/ningbainb/Dcode/releases/tag/v0.2.4)。v0.2.1 用户需先手动安装 v0.2.2 或更新版本；v0.2.2 及后续版本可在应用内检查更新。安装及真实账号的在线链路尚待验收，使用前请阅读[发行说明与 SHA-256](docs/releases/v0.2.4.md)。
 
 ## 验证与贡献
 

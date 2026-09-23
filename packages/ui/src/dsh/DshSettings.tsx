@@ -21,9 +21,12 @@ import {
 import { SettingsResourceHeaderActions } from "@/settings/SettingsResourceHeaderActions.js";
 import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import { ApiKeyInput } from "@/settings/model-provider-section/ApiKeyInput.js";
+import { BooleanModelOption } from "@/settings/model-provider-section/ProviderModelMetadataFields.js";
+import { ModelSettingsGroup } from "@/settings/model-provider-section/ProviderModelSettingsGroups.js";
 import providerCatalog from "./provider-catalog.json" with { type: "json" };
 
 const TEMPLATES = providerCatalog;
+const REASONING_LEVELS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
 const COPY = {
   zh: {
@@ -48,6 +51,20 @@ const COPY = {
     modelName: "显示名称",
     context: "上下文上限",
     output: "输出上限",
+    advanced: "高级模型配置",
+    modalities: "输入能力",
+    modalitiesInherit: "继承 DSH 模型目录",
+    modalitiesExplicit: "手动声明",
+    textInput: "文字",
+    imageInput: "图片",
+    imageHint: "仅在接口确实接受图片时开启；此选项不会检测服务端能力。",
+    reasoning: "推理档位",
+    reasoningMode: "推理配置",
+    reasoningInherit: "继承 DSH 模型目录",
+    reasoningOff: "不支持推理",
+    reasoningCustom: "自定义档位",
+    reasoningWire: "接口参数值",
+    reasoningHint: "档位用于聊天选择，参数值是发给接口的 reasoning effort。",
     addModel: "添加模型",
     removeModel: "移除模型",
     save: "保存到 DSH",
@@ -98,6 +115,20 @@ const COPY = {
     modelName: "Display name",
     context: "Context window",
     output: "Max output",
+    advanced: "Advanced model settings",
+    modalities: "Input capabilities",
+    modalitiesInherit: "Inherit DSH catalog",
+    modalitiesExplicit: "Declare explicitly",
+    textInput: "Text",
+    imageInput: "Images",
+    imageHint: "Enable images only if the endpoint accepts them. This does not probe the server.",
+    reasoning: "Reasoning efforts",
+    reasoningMode: "Reasoning configuration",
+    reasoningInherit: "Inherit DSH catalog",
+    reasoningOff: "No reasoning",
+    reasoningCustom: "Custom efforts",
+    reasoningWire: "API value",
+    reasoningHint: "The level appears in chat; the API value is sent as the reasoning effort.",
     addModel: "Add model",
     removeModel: "Remove model",
     save: "Save to DSH",
@@ -687,6 +718,149 @@ export function DshSettings() {
                             />
                           </Field>
                         </div>
+                        <details
+                          className="border-t border-border pt-3"
+                          data-testid="dsh-model-advanced"
+                        >
+                          <summary className="cursor-pointer text-ui-base font-medium text-foreground-subtle hover:text-foreground">
+                            {t.advanced}
+                          </summary>
+                          <div className="space-y-5 pt-4">
+                            <ModelSettingsGroup group="modalities">
+                              <div className="space-y-2">
+                                <p className="text-ui-base font-medium">{t.modalities}</p>
+                                <Select
+                                  value={model.input ? "custom" : "inherit"}
+                                  onValueChange={(value) =>
+                                    updateModel(index, {
+                                      input: value === "inherit" ? undefined : ["text"],
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger size="lg" className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="inherit">{t.modalitiesInherit}</SelectItem>
+                                    <SelectItem value="custom">{t.modalitiesExplicit}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {model.input && (
+                                  <div className="flex flex-wrap gap-2">
+                                    <span className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-ui-base text-foreground-subtle">
+                                      {t.textInput}
+                                    </span>
+                                    <BooleanModelOption
+                                      label={t.imageInput}
+                                      selected={model.input.includes("image")}
+                                      onToggle={() =>
+                                        updateModel(index, {
+                                          input: model.input?.includes("image")
+                                            ? ["text"]
+                                            : ["text", "image"],
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                )}
+                                <p className="text-ui-caption text-foreground-subtle">
+                                  {t.imageHint}
+                                </p>
+                              </div>
+                            </ModelSettingsGroup>
+                            <ModelSettingsGroup group="reasoning">
+                              <Field label={t.reasoningMode}>
+                                <Select
+                                  value={
+                                    model.reasoningEfforts === undefined
+                                      ? "inherit"
+                                      : model.reasoningEfforts === false
+                                        ? "off"
+                                        : "custom"
+                                  }
+                                  onValueChange={(value) =>
+                                    updateModel(index, {
+                                      reasoningEfforts:
+                                        value === "inherit"
+                                          ? undefined
+                                          : value === "off"
+                                            ? false
+                                            : {
+                                                off: null,
+                                                low: "low",
+                                                medium: "medium",
+                                                high: "high",
+                                              },
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger size="lg" className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="inherit">{t.reasoningInherit}</SelectItem>
+                                    <SelectItem value="off">{t.reasoningOff}</SelectItem>
+                                    <SelectItem value="custom">{t.reasoningCustom}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </Field>
+                              {model.reasoningEfforts && (
+                                <div className="space-y-3">
+                                  <p className="text-ui-base font-medium">{t.reasoning}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {REASONING_LEVELS.map((level) => (
+                                      <BooleanModelOption
+                                        key={level}
+                                        label={level}
+                                        selected={Object.hasOwn(
+                                          model.reasoningEfforts || {},
+                                          level,
+                                        )}
+                                        onToggle={() => {
+                                          const efforts = { ...model.reasoningEfforts };
+                                          if (Object.hasOwn(efforts, level)) {
+                                            delete efforts[level];
+                                            if (
+                                              Object.keys(efforts).every((item) => item === "off")
+                                            )
+                                              return;
+                                          } else efforts[level] = level;
+                                          updateModel(index, { reasoningEfforts: efforts });
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                  {REASONING_LEVELS.filter((level) =>
+                                    Object.hasOwn(model.reasoningEfforts || {}, level),
+                                  ).map((level) => (
+                                    <Field key={level} label={`${level} · ${t.reasoningWire}`}>
+                                      <Input
+                                        size="lg"
+                                        value={
+                                          model.reasoningEfforts &&
+                                          model.reasoningEfforts[level] !== null
+                                            ? model.reasoningEfforts[level]
+                                            : ""
+                                        }
+                                        onChange={(event) =>
+                                          updateModel(index, {
+                                            reasoningEfforts: {
+                                              ...model.reasoningEfforts,
+                                              [level]: event.target.value,
+                                            },
+                                          })
+                                        }
+                                      />
+                                    </Field>
+                                  ))}
+                                  <p className="text-ui-caption text-foreground-subtle">
+                                    {t.reasoningHint}
+                                  </p>
+                                </div>
+                              )}
+                            </ModelSettingsGroup>
+                          </div>
+                        </details>
                       </div>
                     ))}
                   </div>

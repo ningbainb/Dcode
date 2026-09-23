@@ -29,3 +29,39 @@ test("DSH provider draft rejects duplicate models and embedded credentials", () 
     /endpoint/,
   );
 });
+
+test("DSH provider draft preserves supported model capabilities", () => {
+  const result = validateProviderDraft({
+    ...draft,
+    models: [
+      {
+        ...draft.models[0],
+        input: ["text", "image"],
+        reasoningEfforts: { off: null, low: "low", high: "high" },
+      },
+      { ...draft.models[1], reasoningEfforts: false },
+    ],
+  });
+  assert.deepEqual(result.models[0].input, ["text", "image"]);
+  assert.deepEqual(result.models[0].reasoningEfforts, { off: null, low: "low", high: "high" });
+  assert.equal(result.models[1].reasoningEfforts, false);
+});
+
+test("DSH provider draft rejects unsupported capability claims", () => {
+  for (const patch of [
+    { input: ["image"] },
+    { input: ["text", "video"] },
+    { reasoningEfforts: { off: null } },
+    { reasoningEfforts: { medium: "" } },
+    { reasoningEfforts: { extreme: "extreme" } },
+  ]) {
+    assert.throws(
+      () =>
+        validateProviderDraft({
+          ...draft,
+          models: [{ ...draft.models[0], ...patch }],
+        }),
+      /modalities|reasoning/,
+    );
+  }
+});
