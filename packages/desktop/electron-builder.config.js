@@ -13,6 +13,7 @@ import { collectRuntimeModuleClosureEntries } from "./scripts/runtime-dependency
 import {
   resolvePackagedNodePtyPrebuildPath,
   restoreTargetNodePtyPrebuild,
+  shouldCopyNodePtyRuntimePath,
 } from "./scripts/node-pty-package-assets.mjs";
 import { cleanupPackagedSourcemaps } from "./scripts/packaged-sourcemap-cleanup.mjs";
 import { getTargetPlatform } from "./scripts/target-platform.mjs";
@@ -391,7 +392,14 @@ async function injectHoistedRuntimeModulesIntoAsar(context) {
         // 所以在 afterPack 阶段直接重写 app.asar，先把这些运行时包补进去，再交给后续签名和出包。
         mkdirSync(dirname(targetModulePath), { recursive: true });
         rmSync(targetModulePath, { force: true, recursive: true });
-        cpSync(sourceModulePath, targetModulePath, { recursive: true });
+        cpSync(sourceModulePath, targetModulePath, {
+          recursive: true,
+          filter:
+            moduleName === "node-pty"
+              ? (sourcePath) =>
+                  shouldCopyNodePtyRuntimePath(sourceModulePath, sourcePath, targetPlatform.key)
+              : undefined,
+        });
       }
     });
 

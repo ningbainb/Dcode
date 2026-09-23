@@ -1,8 +1,15 @@
 import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
+
+export function shouldCopyNodePtyRuntimePath(sourcePackageRoot, sourcePath, platformKey) {
+  const parts = relative(sourcePackageRoot, sourcePath).replaceAll("\\", "/").split("/");
+  if (parts[0] === "build" || parts[0] === "bin") return false;
+  if (parts[0] === "prebuilds" && parts[1] && parts[1] !== platformKey) return false;
+  return true;
+}
 
 export function restoreTargetNodePtyPrebuild({ desktopPackageRoot, targetPlatform }) {
   if (targetPlatform.os !== "linux") {

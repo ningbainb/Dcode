@@ -36,3 +36,6 @@ The desktop runtime closure must explicitly include `node-pty` when pnpm's
 hoisted root has the package but the desktop package has no local link.
 AfterPack must create `app.asar.unpacked` with the target Windows native
 prebuild; a missing sidecar is a package failure, not an optional artifact.
+When the hoisted `node-pty` package is copied into ASAR staging, include only
+the target platform's `prebuilds` subtree and omit install-machine `build` and
+`bin` directories. The existing native-resource policy must pass afterward.
