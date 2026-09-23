@@ -808,6 +808,13 @@ importers:
       yaml:
         specifier: 2.9.0
         version: 2.9.0
+    devDependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: 1.29.0
+        version: 1.29.0(zod@4.6.5)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
 
   packages/formal-proof:
     dependencies:
@@ -17663,7 +17670,6 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@4.6.5)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@modelcontextprotocol/server@2.0.0':
     dependencies:
@@ -25978,7 +25984,6 @@ snapshots:
   zod-to-json-schema@3.25.2(zod@4.6.5):
     dependencies:
       zod: 4.6.5
-    optional: true
 
   zod@3.25.76: {}
 

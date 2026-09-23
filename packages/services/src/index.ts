@@ -21,6 +21,8 @@ export type {
   DshProviderSettingsView,
   DshProviderDraft,
   DshAgentPluginStatus,
+  DshMcpServer,
+  DshMcpServerSettingsView,
   DshSessionAnnotation,
   DshSessionAnnotationInput,
 } from "./dsh/dsh.js";

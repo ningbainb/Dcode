@@ -35,7 +35,7 @@ pnpm dev:desktop
 
 For validation, run `pnpm typecheck`, `pnpm lint`, `pnpm test:dcode`, and `pnpm test:cloud-backup`. The DSH fixture test at `packages/dsh-runtime/test/agent-e2e.mjs` uses a synthetic local model, not a live provider account. On Windows, `pnpm build:desktop` followed by `pnpm pack:dcode` produces an NSIS installer, `latest.yml`, and a blockmap; `pnpm verify:dcode-release` checks that they match. The installer is unsigned.
 
-The [v0.2.2 Windows x64 test installer](https://github.com/ningbainb/Dcode/releases/tag/v0.2.2) checks GitHub Releases for later updates and lets users download them before confirming restart and installation. v0.2.1 users must install v0.2.2 manually once. Installation and live model/GitHub account flows have not yet been verified. Read the [release notes and SHA-256](docs/releases/v0.2.2.md) before using it.
+The [v0.2.3 Windows x64 test installer](https://github.com/ningbainb/Dcode/releases/tag/v0.2.3) checks GitHub Releases for later updates and lets users download them before confirming restart and installation. v0.2.1 users must manually install v0.2.2 or later once; v0.2.2 users can check for updates in the app. Installation and live model/GitHub account flows have not yet been verified. Read the [release notes and SHA-256](docs/releases/v0.2.3.md) before using it.
 
 ## License and credits
 

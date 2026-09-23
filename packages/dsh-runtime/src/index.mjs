@@ -21,6 +21,7 @@ import {
   readAgentPluginSettings,
   writeAgentPluginSettings,
 } from "./agent-plugins.mjs";
+import { readMcpServerSettings, writeMcpServerSettings } from "./mcp-servers.mjs";
 
 export class DshBackend extends EventEmitter {
   constructor(options) {
@@ -31,6 +32,7 @@ export class DshBackend extends EventEmitter {
     this.pendingApprovals = new Map();
     this.annotations = new SessionAnnotationStore(options.dataDir);
     this.zcodeImport = new ZcodeSessionImportStore(options.dataDir, options.zcodeDbPath);
+    this.mcpMutation = Promise.resolve();
     this.lifecycle.on("status", (status) => this.publish("", "runtime", status));
   }
 
@@ -133,24 +135,51 @@ export class DshBackend extends EventEmitter {
   async installWindowsGuiPlugin() {
     return installWindowsGuiMcp(this.lifecycle.dataDir);
   }
-  async setAgentPluginEnabled(id, enabled) {
+  setAgentPluginEnabled(id, enabled) {
     assertAgentPluginId(id);
     if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean");
-    const previous = await readAgentPluginSettings(this.lifecycle.dataDir);
-    if (previous[id] === enabled) return this.getAgentPlugins();
-    if (enabled) {
-      const status = await this.getAgentPlugins();
-      if (!status[id].available) throw new Error(`${id} dependency is not installed.`);
-    }
-    await writeAgentPluginSettings(this.lifecycle.dataDir, { ...previous, [id]: enabled });
-    try {
-      await this.restart();
-    } catch (error) {
-      await writeAgentPluginSettings(this.lifecycle.dataDir, previous);
-      await this.restart().catch(() => {});
-      throw error;
-    }
-    return this.getAgentPlugins();
+    const attempt = this.mcpMutation.then(async () => {
+      const previous = await readAgentPluginSettings(this.lifecycle.dataDir);
+      if (previous[id] === enabled) return this.getAgentPlugins();
+      if (enabled) {
+        const status = await this.getAgentPlugins();
+        if (!status[id].available) throw new Error(`${id} dependency is not installed.`);
+      }
+      await writeAgentPluginSettings(this.lifecycle.dataDir, { ...previous, [id]: enabled });
+      try {
+        await this.restart();
+      } catch (error) {
+        await writeAgentPluginSettings(this.lifecycle.dataDir, previous);
+        await this.restart().catch(() => {});
+        throw error;
+      }
+      return this.getAgentPlugins();
+    });
+    this.mcpMutation = attempt.catch(() => {});
+    return attempt;
+  }
+  async listMcpServers() {
+    return readMcpServerSettings(this.lifecycle.dataDir);
+  }
+  updateMcpServers(servers, expectedRevision) {
+    const attempt = this.mcpMutation.then(async () => {
+      const previous = await this.listMcpServers();
+      if (previous.revision !== expectedRevision)
+        throw new Error("MCP server settings changed. Refresh and retry.");
+      const next = await writeMcpServerSettings(this.lifecycle.dataDir, servers);
+      try {
+        await this.restart();
+      } catch (error) {
+        await writeMcpServerSettings(this.lifecycle.dataDir, previous.servers, {
+          checkEnvironment: false,
+        });
+        await this.restart().catch(() => {});
+        throw error;
+      }
+      return next;
+    });
+    this.mcpMutation = attempt.catch(() => {});
+    return attempt;
   }
   async listModels() {
     await this.start();

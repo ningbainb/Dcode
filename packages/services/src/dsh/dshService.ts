@@ -43,6 +43,9 @@ export function createDshService(autoStart = false): IDshService {
       (await backend).deleteProvider(id, expectedRevision),
     configureProvider: async (config) => (await backend).configureProvider(config),
     getAgentPlugins: async () => (await backend).getAgentPlugins(),
+    listMcpServers: async () => (await backend).listMcpServers(),
+    updateMcpServers: async (servers, expectedRevision) =>
+      (await backend).updateMcpServers(servers, expectedRevision),
     installWindowsGuiPlugin: async () => (await backend).installWindowsGuiPlugin(),
     setAgentPluginEnabled: async (id, enabled) =>
       (await backend).setAgentPluginEnabled(id, enabled),

@@ -16,6 +16,6 @@ DSH 是会话、消息、模型执行、工具调用和权限请求的事实来�
 
 文件操作与命令执行由 DSH 工具完成，Dcode 原有文件、终端和 Git/Diff 界面用于查看真实文件状态。工具卡片展示执行目标、状态及输出，文件变化仍应以磁盘和 Git Diff 为准。GitHub 云备份由独立服务负责，按项目当前磁盘内容制作快照，不依赖模型的口头声明。
 
-当前桌面功能在 Windows 打包应用里用本地合成模型夹具通过了双会话、项目切换、重启恢复、停止继续、工具输出、文件编辑、Diff 和终端验收。这个测试证明桌面到运行时的本地链路，不证明某个在线模型账号或所有提供商已经实测。原 ZCode 的 MCP、技能、记忆、子智能体、自动化及钩子设置尚未逐项验证能控制 DSH 执行，本地 DSH 工作区不把它们宣传为已贯通能力。
+当前桌面功能在 Windows 打包应用里用本地合成模型夹具通过了双会话、项目切换、重启恢复、停止继续、工具输出、文件编辑、Diff 和终端验收。这个测试证明桌面到运行时的本地链路，不证明某个在线模型账号或所有提供商已经实测。Dcode 的 MCP 设置由 DSH Profile 托管，详见 [MCP 接入](DSH-MCP-SERVERS.md)；原 ZCode 的技能、记忆、子智能体、自动化及钩子设置尚未逐项验证能控制 DSH 执行，本地 DSH 工作区不把它们宣传为已贯通能力。
 
 实现与契约可从 [DSH 运行时](../packages/dsh-runtime/CONTRACT.md)、[工作区会话](../packages/ui/src/dsh/CONTRACT.md) 和 [云备份](../packages/services/src/cloud-backup/CONTRACT.md) 开始阅读。移植代码的上游修订与许可证见 [PROVENANCE.md](../packages/dsh-runtime/vendor/PROVENANCE.md)。

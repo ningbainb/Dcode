@@ -58,6 +58,7 @@ import { ModelProviderSection } from "@/settings/ModelProviderSection.js";
 import { DshSettings } from "@/dsh/DshSettings.js";
 import { DshChatFontSettings } from "@/dsh/DshChatFontSettings.js";
 import { DshAgentPluginsSection } from "@/dsh/DshAgentPluginsSection.js";
+import { DshMcpSettings } from "@/dsh/DshMcpSettings.js";
 import { ZcodeSessionImportSection } from "@/dsh/ZcodeSessionImportSection.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
@@ -676,6 +677,7 @@ export function SettingsPage({
       "appearance",
       "modelProvider",
       "plugin",
+      "mcp",
       "shortcuts",
       "cloudBackup",
       "zcodeImport",
@@ -1916,6 +1918,10 @@ export function SettingsPage({
                               onBack?.();
                             }}
                           />
+                        ) : activeSection === "mcp" && usesDshRuntimeSettings ? (
+                          <ServiceProvider services={localHostServices}>
+                            <DshMcpSettings />
+                          </ServiceProvider>
                         ) : activeSection === "mcp" ? (
                           <PluginsSection
                             key={`mcp:${settingsSectionNavigationVersion}`}

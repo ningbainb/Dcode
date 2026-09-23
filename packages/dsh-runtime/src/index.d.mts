@@ -50,6 +50,27 @@ export interface AgentPluginStatus {
   browser: { enabled: boolean; available: boolean };
   windowsGui: { enabled: boolean; available: boolean; supported: boolean };
 }
+export type McpServer =
+  | {
+      serverName: string;
+      enabled: boolean;
+      transport: "stdio";
+      command: string;
+      args: string[];
+      cwd: string;
+      envRefs: Record<string, string>;
+    }
+  | {
+      serverName: string;
+      enabled: boolean;
+      transport: "streamable-http";
+      url: string;
+      bearerTokenEnv: string;
+    };
+export interface McpServerSettingsView {
+  revision: string;
+  servers: McpServer[];
+}
 export interface SessionAnnotation {
   id: string;
   sessionId: string;
@@ -76,6 +97,8 @@ export class DshBackend extends EventEmitter {
   restart(): Promise<RuntimeHealth>;
   getLogsPath(): Promise<string>;
   getAgentPlugins(): Promise<AgentPluginStatus>;
+  listMcpServers(): Promise<McpServerSettingsView>;
+  updateMcpServers(servers: McpServer[], expectedRevision: string): Promise<McpServerSettingsView>;
   installWindowsGuiPlugin(): Promise<AgentPluginStatus>;
   setAgentPluginEnabled(id: "browser" | "windowsGui", enabled: boolean): Promise<AgentPluginStatus>;
   listModels(): Promise<Model[]>;

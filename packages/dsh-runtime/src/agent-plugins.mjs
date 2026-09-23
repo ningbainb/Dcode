@@ -5,6 +5,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import YAML from "yaml";
+import { mcpServerRows, readMcpServerSettings } from "./mcp-servers.mjs";
 
 const require = createRequire(import.meta.url);
 const MARKER_START = "# Dcode managed MCP plugins begin";
@@ -56,7 +57,10 @@ export async function getAgentPluginStatus(dataDir) {
     /* package is not deployed */
   }
   return {
-    browser: { enabled: enabled.browser, available: process.platform === "win32" && browserAvailable },
+    browser: {
+      enabled: enabled.browser,
+      available: process.platform === "win32" && browserAvailable,
+    },
     windowsGui: {
       enabled: enabled.windowsGui,
       available: process.platform === "win32" && existsSync(windowsGuiExecutable(dataDir)),
@@ -106,7 +110,10 @@ function managedRows(settings, dataDir, nodeExecutable) {
 export async function writeManagedMcpPatch(profileDir, dataDir, nodeExecutable) {
   const patchPath = join(profileDir, "cordis.patch.yml");
   const settings = await readAgentPluginSettings(dataDir);
-  const rows = managedRows(settings, dataDir, nodeExecutable);
+  const rows = [
+    ...managedRows(settings, dataDir, nodeExecutable),
+    ...mcpServerRows((await readMcpServerSettings(dataDir)).servers),
+  ];
   let current;
   try {
     current = await readFile(patchPath, "utf8");

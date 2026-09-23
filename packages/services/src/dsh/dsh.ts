@@ -97,6 +97,29 @@ export interface DshAgentPluginStatus {
   windowsGui: { enabled: boolean; available: boolean; supported: boolean };
 }
 
+export type DshMcpServer =
+  | {
+      serverName: string;
+      enabled: boolean;
+      transport: "stdio";
+      command: string;
+      args: string[];
+      cwd: string;
+      envRefs: Record<string, string>;
+    }
+  | {
+      serverName: string;
+      enabled: boolean;
+      transport: "streamable-http";
+      url: string;
+      bearerTokenEnv: string;
+    };
+
+export interface DshMcpServerSettingsView {
+  revision: string;
+  servers: DshMcpServer[];
+}
+
 export interface DshSessionAnnotation {
   id: string;
   sessionId: string;
@@ -140,6 +163,11 @@ export interface IDshService {
   deleteProvider(id: string, expectedRevision: number): Promise<void>;
   configureProvider(config: DshProviderConfig): Promise<void>;
   getAgentPlugins(): Promise<DshAgentPluginStatus>;
+  listMcpServers(): Promise<DshMcpServerSettingsView>;
+  updateMcpServers(
+    servers: DshMcpServer[],
+    expectedRevision: string,
+  ): Promise<DshMcpServerSettingsView>;
   installWindowsGuiPlugin(): Promise<DshAgentPluginStatus>;
   setAgentPluginEnabled(
     id: "browser" | "windowsGui",

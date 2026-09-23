@@ -26,5 +26,9 @@
     "@playwright/mcp": "0.0.82",
     "ws": "8.20.0",
     "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.6.5"
   }
 }

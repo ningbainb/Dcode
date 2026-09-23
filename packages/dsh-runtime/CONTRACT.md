@@ -27,6 +27,14 @@ of the profile patch are generated; unrelated user rows are retained. Changes
 restart DSH, so an active turn may be interrupted. The ZCode plugin settings
 are a different runtime and are not presented as DSH Agent tools.
 
+User-defined MCP servers share the official `@deepseek-ai/dsh-mcp-client`
+registration path. `DshBackend` owns a versioned Dcode-only server file;
+`writeManagedMcpPatch` combines those rows with the built-in browser/GUI rows.
+The local Desktop MCP page edits only that file through `IDshService`, never
+the legacy ZCode Agent MCP store. Environment mappings store variable names,
+not values; DSH resolves them when its profile loads. See
+`docs/DSH-MCP-SERVERS.md` for mutation and restart semantics.
+
 Startup: ensure profile -> controller.start -> authenticated health -> ready.
 Stop: cancel active work -> controller.stop. Restart creates a new generation; previous
 stream subscribers must close. Errors are surfaced and never replaced by fake answers.
