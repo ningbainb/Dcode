@@ -1,6 +1,7 @@
 import base from "./electron-builder.config.js";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
+import { staleDcodeBundleExclusions } from "./scripts/dcode-stale-bundle-filter.mjs";
 import { collectRuntimeModuleClosureEntries } from "./scripts/runtime-dependency-closure.mjs";
 import { brandDcodeExecutable } from "./scripts/brand-dcode-executable.mjs";
 import { verifyPackagedRenderer } from "./scripts/verify-dcode-renderer.mjs";
@@ -48,6 +49,7 @@ export default {
     ...base.files.filter((pattern) => typeof pattern === "string" && pattern.startsWith("!")),
     "!node_modules/@dcode/**",
     "!node_modules/@deepseek-ai/**",
+    ...staleDcodeBundleExclusions(desktop),
   ],
   extraResources: [
     ...base.extraResources,

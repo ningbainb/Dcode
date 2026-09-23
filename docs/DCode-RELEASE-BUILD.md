@@ -28,3 +28,7 @@ DSH temp directory repair. A default `workspace-write` desktop test must reprodu
 the project ACL error, invoke the visible repair action and verify that a new
 session can execute PowerShell without lowering DSH's permission mode. The
 unpacked installer must pass the normal desktop smoke before publication.
+When a previous desktop `out` directory remains, the Dcode package includes
+only main/host/preload JavaScript generated after the current build metadata
+timestamp. Older chunks and source maps must be excluded from app.asar even if
+the build environment does not allow cleaning the old files from disk.
