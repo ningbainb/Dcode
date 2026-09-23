@@ -4,11 +4,13 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { extname, resolve } from "node:path";
 
@@ -56,7 +58,16 @@ export function stripSourceMappingUrlCommentsInDirectory(rootDir) {
       return;
     }
 
-    writeFileSync(filePath, stripSourceMappingUrlComments(source));
+    // Replace the directory entry rather than overwriting its inode. Packaged
+    // resources may be staged with same-volume hardlinks to the runtime cache;
+    // an in-place write would silently modify that source cache as well.
+    const replacement = `${filePath}.dcode-strip-${randomUUID()}`;
+    try {
+      writeFileSync(replacement, stripSourceMappingUrlComments(source));
+      renameSync(replacement, filePath);
+    } finally {
+      if (existsSync(replacement)) unlinkSync(replacement);
+    }
     summary.filesChanged += 1;
     summary.referencesRemoved += referencesRemoved;
   });
