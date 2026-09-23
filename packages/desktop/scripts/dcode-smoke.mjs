@@ -87,6 +87,9 @@ try {
   await modelSettings.getByRole('button', { name: /^(Save to DSH|保存到 DSH)$/ }).click();
   await modelSettings.getByText(/已保存到 DSH|Saved to DSH/).waitFor({ timeout: 30000 });
   assert.equal(await modelSettings.getByTestId('model-provider-api-key-input').inputValue(), '');
+  await page.getByRole('button', { name: /^MCP (servers|服务器)$/i }).click();
+  await page.getByTestId('dsh-mcp-settings').waitFor();
+  await capture(page, 'mcp-settings.png');
   await page.getByTestId('settings-back-button').click();
   await modelSettings.waitFor({ state: 'hidden' });
   await chat.getByTestId('dsh-model-select').selectOption('desktop-ui-fixture/dcode-fixture');

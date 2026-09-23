@@ -94,15 +94,26 @@ try {
   assert.equal(await page.getByText("Z.ai", { exact: true }).count(), 0);
   await page.getByText("deepseek-flash", { exact: true }).waitFor();
   await page.getByRole("button", { name: "添加供应商" }).click();
+  assert.equal(await page.getByTestId("dsh-provider-catalog").locator("button").count(), 16);
+  assert.equal(await page.getByText("Z.ai", { exact: true }).count(), 0);
+  assert.equal(await page.getByText("BigModel API", { exact: true }).count(), 0);
+  await page.getByRole("textbox", { name: "搜索供应商" }).fill("kimi-k3");
+  assert.equal(
+    await page.getByTestId("dsh-provider-catalog").getByRole("button", { name: /Kimi/ }).count(),
+    1,
+  );
   await page.getByRole("textbox", { name: "搜索供应商" }).fill("openai");
   assert.equal(
     await page
       .getByTestId("dsh-provider-catalog")
-      .getByRole("button", { name: "Anthropic" })
+      .getByRole("button", { name: /^Anthropic\s/ })
       .count(),
     0,
   );
   await page.getByTestId("dsh-provider-catalog").getByRole("button", { name: "OpenAI" }).click();
+  assert.equal(await page.getByLabel("模型 ID").inputValue(), "gpt-6-astra");
+  assert.equal(await page.getByLabel("接口地址").inputValue(), "https://api.openai.com/v1");
+  assert.equal(await page.locator('datalist option[value="gpt-6-astra"]').count(), 1);
   await page.getByLabel("模型 ID").fill("first-model");
   await page.getByRole("button", { name: "添加模型" }).click();
   await page.getByLabel("模型 ID").nth(1).fill("second-model");

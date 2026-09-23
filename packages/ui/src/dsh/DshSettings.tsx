@@ -21,53 +21,9 @@ import {
 import { SettingsResourceHeaderActions } from "@/settings/SettingsResourceHeaderActions.js";
 import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import { ApiKeyInput } from "@/settings/model-provider-section/ApiKeyInput.js";
+import providerCatalog from "./provider-catalog.json" with { type: "json" };
 
-const TEMPLATES = [
-  {
-    id: "openai",
-    name: "OpenAI",
-    logo: "openai",
-    api: "openai-responses",
-    baseURL: "https://api.openai.com/v1",
-  },
-  {
-    id: "anthropic",
-    name: "Anthropic",
-    logo: "anthropic",
-    api: "anthropic-messages",
-    baseURL: "https://api.anthropic.com",
-  },
-  {
-    id: "openrouter",
-    name: "OpenRouter",
-    logo: "openrouter",
-    api: "openai-completions",
-    baseURL: "https://openrouter.ai/api/v1",
-  },
-  {
-    id: "deepseek-api",
-    name: "DeepSeek API",
-    logo: "deepseek",
-    api: "openai-completions",
-    baseURL: "https://api.deepseek.com",
-  },
-  { id: "minimax", name: "MiniMax", logo: "minimax", api: "openai-completions", baseURL: "" },
-  {
-    id: "moonshot-kimi",
-    name: "Moonshot / Kimi",
-    logo: "moonshot-kimi",
-    api: "openai-completions",
-    baseURL: "",
-  },
-  {
-    id: "alibaba-model-studio",
-    name: "Alibaba Cloud",
-    logo: "alibaba-model-studio",
-    api: "openai-completions",
-    baseURL: "",
-  },
-  { id: "xai", name: "xAI", logo: "xai", api: "openai-completions", baseURL: "" },
-] as const;
+const TEMPLATES = providerCatalog;
 
 const COPY = {
   zh: {
@@ -98,10 +54,12 @@ const COPY = {
     saving: "保存中…",
     remove: "删除供应商",
     choose: "从左侧选择供应商，或添加新供应商。",
-    templateHint: "选择一个模板后填写模型 ID；预填地址和协议都可以修改。",
+    templateHint: "从原有独立 API 目录选择供应商；地址、协议和模型均可修改。",
     search: "搜索供应商",
+    searchConfigured: "筛选已配置供应商",
     noMatches: "没有匹配的供应商",
     apiProviders: "API 供应商",
+    modelSuggestion: "可输入其他模型 ID，或从候选列表选择。",
     modelCount: (count: number) => `${count} 个模型`,
     moveUp: "上移模型",
     moveDown: "下移模型",
@@ -146,10 +104,12 @@ const COPY = {
     saving: "Saving…",
     remove: "Delete provider",
     choose: "Select a provider on the left or add a new one.",
-    templateHint: "Choose a template, then enter a model ID. Endpoints and protocols are editable.",
+    templateHint: "Choose an API provider. Its endpoint, protocol and model are editable.",
     search: "Search providers",
+    searchConfigured: "Filter configured providers",
     noMatches: "No matching providers",
     apiProviders: "API providers",
+    modelSuggestion: "Choose a suggested model or enter another model ID.",
     modelCount: (count: number) => `${count} model${count === 1 ? "" : "s"}`,
     moveUp: "Move model up",
     moveDown: "Move model down",
@@ -180,13 +140,14 @@ function draftFromProvider(provider: DshProviderSettings): DshProviderDraft {
 }
 
 function newDraft(template?: (typeof TEMPLATES)[number]): DshProviderDraft {
+  const modelId = template?.models[0] ?? "";
   return {
     id: template?.id ?? "",
     name: template?.name ?? "",
     api: template?.api ?? "openai-completions",
     baseURL: template?.baseURL ?? "",
     apiKey: "",
-    models: [{ id: "", name: "", contextWindow: 128000, maxTokens: 8192 }],
+    models: [{ id: modelId, name: modelId, contextWindow: 128000, maxTokens: 8192 }],
   };
 }
 
@@ -210,10 +171,17 @@ export function DshSettings() {
   const [notice, setNotice] = useState("");
   const [keyVisible, setKeyVisible] = useState(false);
   const [catalogQuery, setCatalogQuery] = useState("");
+  const [providerQuery, setProviderQuery] = useState("");
   const refreshSerial = useRef(0);
   const selected = view?.providers.find((provider) => provider.id === selectedId) ?? null;
   const visibleTemplates = TEMPLATES.filter((template) =>
-    `${template.name} ${template.id}`.toLowerCase().includes(catalogQuery.trim().toLowerCase()),
+    `${template.name} ${template.nameZh} ${template.id} ${template.models.join(" ")}`
+      .toLowerCase()
+      .includes(catalogQuery.trim().toLowerCase()),
+  );
+  const modelSuggestions = TEMPLATES.find((template) => template.id === draft?.id)?.models ?? [];
+  const visibleProviders = view?.providers.filter((provider) =>
+    `${provider.name} ${provider.id}`.toLowerCase().includes(providerQuery.trim().toLowerCase()),
   );
 
   const refresh = useCallback(
@@ -373,7 +341,16 @@ export function DshSettings() {
             <p className="px-2 py-2 text-ui-xs font-semibold text-foreground-subtle max-md:sr-only">
               {t.provider}
             </p>
-            {view?.providers.map((provider) => (
+            {(view?.providers.length ?? 0) > 4 && (
+              <Input
+                aria-label={t.searchConfigured}
+                value={providerQuery}
+                onChange={(event) => setProviderQuery(event.target.value)}
+                placeholder={t.search}
+                className="mb-2 max-md:hidden"
+              />
+            )}
+            {visibleProviders?.map((provider) => (
               <button
                 key={provider.id}
                 type="button"
@@ -444,7 +421,12 @@ export function DshSettings() {
                         className="size-8"
                       />
                       <span className="min-w-0 flex-1 text-ui-base font-medium">
-                        {template.name}
+                        <span className="block truncate">
+                          {locale.startsWith("zh") ? template.nameZh : template.name}
+                        </span>
+                        <span className="mt-0.5 block text-ui-xs text-foreground-subtle">
+                          {template.models.length} {t.model} · {template.api}
+                        </span>
                       </span>
                       <ChevronRight className="size-4 text-foreground-subtlest" />
                     </button>
@@ -650,8 +632,30 @@ export function DshSettings() {
                             <Input
                               size="lg"
                               value={model.id}
-                              onChange={(event) => updateModel(index, { id: event.target.value })}
+                              list={
+                                modelSuggestions.length ? `dsh-model-options-${index}` : undefined
+                              }
+                              onChange={(event) =>
+                                updateModel(index, {
+                                  id: event.target.value,
+                                  ...(model.name === model.id || !model.name
+                                    ? { name: event.target.value }
+                                    : {}),
+                                })
+                              }
                             />
+                            {modelSuggestions.length > 0 && (
+                              <datalist id={`dsh-model-options-${index}`}>
+                                {modelSuggestions.map((id) => (
+                                  <option key={id} value={id} />
+                                ))}
+                              </datalist>
+                            )}
+                            {modelSuggestions.length > 0 && (
+                              <span className="text-ui-xs text-foreground-subtlest">
+                                {t.modelSuggestion}
+                              </span>
+                            )}
                           </Field>
                           <Field label={t.modelName}>
                             <Input
