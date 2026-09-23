@@ -2,6 +2,8 @@
 
 当前交付与验收范围是 Windows x64。macOS 和 Linux 是后续目标；仓库中已有 Electron Builder 的对应目标配置，但尚未构成可安装、可更新、可验收的 Dcode 发行版。
 
+当前 DSH 会话、图片与文件上传使用运行时协议，没有在消息格式中写入 Windows 路径；它们可以作为跨平台共用层。平台适配的主要缺口在运行时部署、原生模块、插件与发行流程，不能仅凭界面可构建就宣称支持。
+
 ## 先补齐共同构建链路
 
 1. 将 DSH 物理运行时部署目录与就绪标记按操作系统和 CPU 架构隔离。目前目录名只包含 DSH 版本与锁文件摘要，在共享工作区里可能误用另一平台的 Node 可执行文件或原生模块。
@@ -9,6 +11,7 @@
 3. 让 `afterPack` 按平台定位 `app.asar`、DSH runtime 和可执行文件。macOS 的资源位于 `.app/Contents/Resources`；Windows 的可执行文件品牌处理只应在 Windows 执行。
 4. 按各平台重新部署和验证 Node、DSH、`node-pty` 等原生依赖，不复用 Windows 的预构建 runtime。用实际安装后的应用做启动、会话、终端、文件工具和插件烟测。
 5. 自动更新分别验证 Windows、macOS、Linux 的发布元数据、下载与重启安装。发布前检查应用身份、签名要求和升级路径，避免把“能构建”当作“能自动更新”。
+6. 浏览器操控当前在 `agent-plugins.mjs` 中仅对 Windows/Edge 开放；macOS/Linux 需验证 Playwright MCP 与本地 Chromium 的打包、启动及权限。Windows GUI MCP 不能直接迁移，需分别选定并验证系统级 Computer Use 后端，界面应显示平台能力差异。
 
 ## 平台验收
 
