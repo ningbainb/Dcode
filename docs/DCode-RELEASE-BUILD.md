@@ -23,3 +23,8 @@ GitHub release test; local metadata consistency alone cannot prove download and
 installation. For v0.2.5, an isolated v0.2.4 application discovered the release,
 downloaded an installer with the published SHA-256, and reached restart-to-update.
 The installer was not run, so the final replacement/restart path remains unverified.
+For v0.2.6, the package must contain DSH `0.1.7-alpha.2` and the private Windows
+DSH temp directory repair. A default `workspace-write` desktop test must reproduce
+the project ACL error, invoke the visible repair action and verify that a new
+session can execute PowerShell without lowering DSH's permission mode. The
+unpacked installer must pass the normal desktop smoke before publication.
