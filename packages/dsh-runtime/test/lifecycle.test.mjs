@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { EventEmitter } from "node:events";
 import { createServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdtemp, rm, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { DshLifecycle } from "../src/lifecycle.mjs";
 import { probeHttpReady } from "../vendor/runtime-controller.mjs";
 
@@ -38,6 +38,7 @@ test("concurrent startup shares one controller and authenticates before ready", 
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   let starts = 0,
     stops = 0;
+  let launchOptions;
   const controller = Object.assign(new EventEmitter(), {
     status: { state: "stopped" },
     async start() {
@@ -51,7 +52,10 @@ test("concurrent startup shares one controller and authenticates before ready", 
   });
   const runtime = new DshLifecycle({
     dataDir: root,
-    controllerFactory: () => controller,
+    controllerFactory: (options) => {
+      launchOptions = options;
+      return controller;
+    },
     prepareProfile: async () => ({ cliPath: "fixture" }),
   });
   try {
@@ -59,6 +63,13 @@ test("concurrent startup shares one controller and authenticates before ready", 
     assert.equal(starts, 1);
     assert.ok(values.every((value) => value.state === "ready"));
     assert.equal(runtime.cookie, "dcode=test");
+    if (process.platform === "win32") {
+      const privateTemp = join(root, "dsh-temp");
+      assert.equal((await stat(privateTemp)).isDirectory(), true);
+      assert.equal(launchOptions.environmentProvider().TEMP, privateTemp);
+      assert.equal(launchOptions.environmentProvider().TMP, privateTemp);
+      assert.notEqual(privateTemp, process.env.TEMP);
+    }
     await runtime.stop();
     assert.equal(stops, 1);
     assert.equal(runtime.health().state, "stopped");

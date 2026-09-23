@@ -52,6 +52,11 @@ It grants only the current user inheritable `WRITE_OWNER` on the canonical selec
 workspace directory after a matching DSH sandbox failure. It does not alter DSH
 permission mode, accept a drive root, or write another workspace. The next tool
 attempt remains DSH-owned; a successful ACL command is not a successful tool run.
+The Host creates a Dcode-owned `dsh-temp` sibling of the DSH home and gives only
+the DSH child process `TEMP` and `TMP` pointing there. On Windows, this private
+directory receives the current user's inheritable `WRITE_OWNER` at startup so
+DSH 0.1.7 can materialize its per-session temp grants on data drives that grant
+only Modify. The ambient system temp directory and project ACL remain untouched.
 
 Acceptance scenarios: concurrent start is idempotent; startup failure is recoverable;
 session history survives runtime restart; workspace and model selection reach the agent;

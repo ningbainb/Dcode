@@ -28,8 +28,9 @@ Windows 安装包的物理 runtime 部署目录由 DSH 包版本与锁文件摘�
 
 ## Windows 工作区 ACL 修复
 
-0.1.7 的低完整性标签需要工作区目录具备 `WRITE_OWNER`。数据盘常见的 `Authenticated Users: Modify` 不含此权限；只在隔离项目目录给当前用户增加可继承的 `WRITE_OWNER` 后，默认 `workspace-write` 的 DSH 真实读、写、编辑和 PowerShell E2E 已通过。此修复与关闭沙箱不同，不修改 DSH 权限模式，也不授予整个磁盘权限。
+0.1.7 的低完整性标签需要工作区和 DSH 私有临时目录具备 `WRITE_OWNER`。数据盘常见的 `Authenticated Users: Modify` 不含此权限。Dcode 在自己的数据目录下创建独立的 `dsh-temp`，只给当前用户补该目录的可继承 `WRITE_OWNER`，并仅为 DSH 子进程指定 `TEMP`/`TMP`；不会修改系统临时目录或其他应用环境。项目目录仍仅在用户点击修复入口时变更。此修复不修改 DSH 权限模式，也不授予整个磁盘权限。
 
 当当前工作区的 DSH 工具结果包含 `SetNamedSecurityInfoW failed (Win32 5): grantWrite(<当前工作区>)` 时，聊天显示一次明确的修复入口。用户点击后，Dcode Host 将路径规范化、拒绝盘符根目录与非目录目标，获取当前 Windows 用户 SID，然后通过无 shell 的 `icacls` 参数调用，仅在该目录增加 `(OI)(CI)(WO)` ACE。ZCode/DSH 会话与文件内容不写入该操作；修复失败显示错误且不切换到 `danger-full-access`。下一次工具调用继续由 DSH 正常沙箱检查。项目切换期间的迟到结果不得显示到新项目。
 
-验收：隔离目录在修复前复现 Win32 5，点击入口后当前项目 ACL 多出当前用户的可继承 `WRITE_OWNER`，同一项目的默认 `workspace-write` 工具真实执行成功；另一个项目的 ACL 保持原样。没有用户点击时不修改工作区 ACL。不同原因的工具错误不展示此入口。
+验收：隔离目录在修复前复现 Win32 5，点击入口后当前项目 ACL 多出当前用户的可继承 `WRITE_OWNER`，同一项目的默认 `workspace-write` 工具真实执行成功；另一个项目的 ACL 保持原样。没有用户点击时不修改工作区 ACL。不同原因的工具错误不展示此入口。DSH 私有临时目录的 ACL 与项目目录分离，重启后仍可创建和清理会话临时授权。
+桌面端 `DCODE_TEST_ACL_REPAIR=1` 烟测使用默认权限模式，在新的隔离项目中先等待原生沙箱错误及修复入口，点击后新建会话重新执行同一工具链，并检查 PowerShell 的实际输出；测试不预先改变目标项目 ACL。

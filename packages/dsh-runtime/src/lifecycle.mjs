@@ -4,6 +4,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { DshRuntimeController } from "../vendor/runtime-controller.mjs";
 import { ensureDcodeProfile, PROFILE_NAME } from "./profile.mjs";
+import { grantWindowsWorkspaceOwnerRight } from "./windows-workspace-acl.mjs";
 
 export class DshLifecycle extends EventEmitter {
   constructor({ dataDir, executable = process.execPath, controllerFactory, prepareProfile } = {}) {
@@ -12,6 +13,7 @@ export class DshLifecycle extends EventEmitter {
     this.dataDir = dataDir;
     this.dshHome = join(dataDir, "dsh");
     this.logsPath = join(dataDir, "logs");
+    this.runtimeTempDir = join(dataDir, "dsh-temp");
     this.executable = executable;
     this.importBridgeToken = randomUUID();
     this.controllerFactory = controllerFactory ?? ((options) => new DshRuntimeController(options));
@@ -68,6 +70,11 @@ export class DshLifecycle extends EventEmitter {
 
   async startRuntime() {
     await mkdir(this.logsPath, { recursive: true });
+    await mkdir(this.runtimeTempDir, { recursive: true });
+    if (process.platform === "win32") {
+      // 0.1.7 的会话临时目录需要 WRITE_OWNER；只修复 Dcode 自有目录，避免改系统 TEMP。
+      await grantWindowsWorkspaceOwnerRight(this.runtimeTempDir);
+    }
     const { cliPath } = await this.prepareProfile(this.dshHome, this.executable);
     if (!this.controller) {
       this.controller = this.controllerFactory({
@@ -85,6 +92,9 @@ export class DshLifecycle extends EventEmitter {
         environmentProvider: () => ({
           DSH_TELEMETRY_DISABLED: "1",
           DCODE_ZCODE_IMPORT_TOKEN: this.importBridgeToken,
+          ...(process.platform === "win32"
+            ? { TEMP: this.runtimeTempDir, TMP: this.runtimeTempDir }
+            : {}),
         }),
       });
       this.controller.on("status", () => this.emit("status", this.health()));

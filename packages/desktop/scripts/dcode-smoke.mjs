@@ -127,6 +127,21 @@ try {
   }), null, 2));
   await chat.getByTestId('dsh-send').click();
   console.log('[smoke] Message sent');
+  const aclRepairScenario = process.env.DCODE_TEST_ACL_REPAIR === '1';
+  if (aclRepairScenario) {
+    assert.equal(process.env.DSH_PERMISSION_MODE, undefined, 'ACL repair must run with the default sandbox');
+    const repair = chat.getByTestId('dsh-windows-acl-repair');
+    await repair.getByRole('button', { name: /Repair permissions|修复权限/ }).waitFor({ timeout: 180000 });
+    assert.match(await chat.getByTestId('dcode-messages').innerText(), /SetNamedSecurityInfoW failed \(Win32 5\)/);
+    await repair.getByRole('button', { name: /Repair permissions|修复权限/ }).click();
+    await repair.getByText(/Workspace permission repaired|已为当前项目补充所需权限/).waitFor({ timeout: 30000 });
+    await chat.getByTestId('dsh-stop').waitFor({ state: 'hidden', timeout: 120000 });
+    await page.getByTestId('conversation-new-task').click();
+    await chat.getByTestId('dsh-empty-state').waitFor();
+    await chat.getByTestId('dsh-message-input').fill('Read input.txt, write and edit output.txt, then execute the verification command.');
+    await chat.getByTestId('dsh-send').click();
+    console.log('[smoke] Windows ACL repaired; retrying in a new DSH session');
+  }
   const deadline = Date.now() + 180000;
   while (!(await chat.getByTestId('dcode-messages').innerText()).includes('DCode streaming complete.') || await chat.getByTestId('dsh-stop').isVisible()) {
     const allow = chat.getByRole('button', { name: /Allow once|允许一次/ });
@@ -135,6 +150,12 @@ try {
     await page.waitForTimeout(300);
   }
   assert.ok((await chat.innerText()).includes('DCODE_SHELL_OK'));
+  if (aclRepairScenario) {
+    const shellRow = chat.getByTestId('dcode-messages').locator('[data-testid="dsh-tool-row"][data-tool-name="pwsh"]').last();
+    assert.match(await shellRow.getAttribute('aria-label'), /Done|已完成/);
+    await shellRow.click();
+    assert.match(await shellRow.locator('xpath=..').locator('pre').last().innerText(), /DCODE_SHELL_OK/);
+  }
   await capture(page, '02-activity-compact.png');
   await chat.getByTestId('dcode-messages').locator('[data-testid="dsh-tool-row"][data-tool-name="read"]').first().click();
   assert.ok((await chat.innerText()).includes('DCode input'));
@@ -301,6 +322,7 @@ try {
   assert.ok(!errors.join('\n').includes('zcode-agent.subscribeSessionsIndexV4 FAIL'),
     'Local DSH workspaces must not subscribe to the unavailable legacy agent index');
   await writeFile(join(data, 'result.json'), JSON.stringify({ passed: true, desktop: true, fixtureModel: true,
+    aclRepair: aclRepairScenario,
     toolOutputVisible: true, fileEdited: true, historyRestored: true, projectSwitchIsolated: true, appRestartRestored: true, runtimeRestart: true, cancellation: true, continuation: true,
     explorerMenuUnchanged: true, providerSettingsUI: true, cloudBackupSettingsUI: true, customCommandBridge: true, brandingUI: true, upstreamEntrypointsRemoved: true, nativeTerminal: true, packaged: identity.packaged, diffOpened: true, title: await page.title() }, null, 2));
   console.log('PASS: Desktop opened workspace, used DSH fixture model, displayed tool output and opened Git review.');
