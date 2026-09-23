@@ -223,6 +223,14 @@ try {
   await page.keyboard.press('Control+,');
   await page.getByRole('button', { name: /^(General|常规)$/ }).click();
   await page.getByRole('switch', { name: /^(Automatically download and install updates|自动下载并安装更新)$/ }).waitFor();
+  const skillsSettings = page.getByRole('button', { name: /^(Skills|技能)$/ });
+  const commandsSettings = page.getByRole('button', { name: /^(Commands|命令)$/ });
+  await skillsSettings.click();
+  await page.getByTestId('plugin-settings-scope-trigger').waitFor();
+  await page.locator('[data-independent-capability-count="true"]').getByText(/^(Skills|技能)$/).waitFor();
+  await commandsSettings.click();
+  await page.getByTestId('plugin-settings-scope-trigger').waitFor();
+  await page.locator('[data-independent-capability-count="true"]').getByText(/^(Commands|命令)$/).waitFor();
   await page.getByRole('button', { name: /^(Cloud backup|云备份)$/ }).click();
   await page.getByRole('button', { name: /^(Sign in with browser|浏览器登录)$/ }).waitFor();
   assert.equal(await page.getByRole('switch').isChecked(), false);

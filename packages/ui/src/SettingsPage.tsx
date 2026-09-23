@@ -678,6 +678,8 @@ export function SettingsPage({
       "modelProvider",
       "plugin",
       "mcp",
+      "skill",
+      "commands",
       "shortcuts",
       "cloudBackup",
       "zcodeImport",

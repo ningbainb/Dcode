@@ -22,6 +22,11 @@ appended to the body. Shell interpolation (`!` backticks and ` ```! ` blocks) is
 because running those expressions in the renderer would cross the execution boundary.
 The prompt identifies the command source, but sends no ZCode-specific runtime metadata.
 
+Local Desktop Settings keeps the existing Commands page visible so users can create,
+edit and disable the Markdown commands that the DSH composer reads. The page retains
+the ZCode layout and workspace/user scope selector. It does not edit DSH-native UI
+commands.
+
 On list or expansion failure the draft stays in the composer and DSH receives nothing.
 The workspace path captured at submit selects the command catalog; later UI selection
 changes do not redirect the accepted DSH send. This bridge does not claim support for

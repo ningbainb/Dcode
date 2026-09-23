@@ -10,6 +10,8 @@ The bridge reads only the accepted workspace's skill roots, the current user's Z
 
 ZCode's disabled path map is read on every discovery and load. The provider watches the skill roots and enable-config file, invalidates DSH's catalog on changes, and reports a complete observation only after its watcher is ready. This matters because DSH intentionally withholds the model-facing catalog for incomplete observations. A skill disabled in the UI disappears from the next catalog after the filesystem change is observed, without restarting. The DSH registry remains the owner of skill precedence and model-facing presentation. The renderer does not inject a second skill prompt.
 
+On local DSH workspaces the existing Settings → Skills page remains visible. It edits the same ZCode skill files and enable flags consumed by the bridge, with the existing ZCode layout and workspace/user scope selector. The page does not claim to manage DSH-native skills that live only in DSH's own roots.
+
 ```text
 ZCode Skills UI -> ~/.zcode/cli/config.json + .zcode/skills files
                                     |
@@ -20,6 +22,7 @@ DSH profile bundle -> DSH skill provider -> DSH catalog / skill tool -> agent
 ## Acceptance
 
 - A workspace `.zcode/skills/<name>/SKILL.md` and a user skill are visible in an actual DSH model request and can be loaded with the native `skill` tool.
+- Local Desktop Settings has a Skills entry; opening it shows the ZCode skill manager and its scope selector.
 - A disabled ZCode skill disappears from the next DSH catalog, while unrelated DSH skills remain available.
 - Nested workspaces use the nearest ZCode root first; no new `.dsh` or `.agents` files are written into the user's project.
 - A malformed or unreadable skill cannot prevent other skills or the DSH session from working.
