@@ -32,3 +32,7 @@ When a previous desktop `out` directory remains, the Dcode package includes
 only main/host/preload JavaScript generated after the current build metadata
 timestamp. Older chunks and source maps must be excluded from app.asar even if
 the build environment does not allow cleaning the old files from disk.
+The desktop runtime closure must explicitly include `node-pty` when pnpm's
+hoisted root has the package but the desktop package has no local link.
+AfterPack must create `app.asar.unpacked` with the target Windows native
+prebuild; a missing sidecar is a package failure, not an optional artifact.

@@ -108,6 +108,8 @@ const asarCliPath = resolve(
   "asar.js",
 );
 const REQUIRED_ASAR_RUNTIME_MODULES = [
+  // pnpm 的 node-pty 可能只链接在工作区根目录；缺它时重封装没有 native sidecar，终端也无法启动。
+  "node-pty",
   "module-details-from-path",
   "@opentelemetry/api-logs",
   // Bugfix: telemetry 的 OTLP exporter 会在启动阶段加载 sdk-metrics。pnpm 开发态可从
