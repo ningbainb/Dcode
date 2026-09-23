@@ -36,7 +36,10 @@ export function verifyDcodeRuntime(runtimeRoot) {
   `,
       entry,
     ],
-    { cwd: runtimeRoot, encoding: "utf8", windowsHide: true, timeout: 60000 },
+    // Windows cold starts can spend over a minute loading the DSH plugin manager
+    // from the physical deployment tree. Keep the real import check, but allow
+    // enough time for it to finish on a busy disk.
+    { cwd: runtimeRoot, encoding: "utf8", windowsHide: true, timeout: 180000 },
   );
   if (result.status !== 0)
     throw new Error(`Packaged DSH cannot load: ${result.error?.message || result.stderr}`);
