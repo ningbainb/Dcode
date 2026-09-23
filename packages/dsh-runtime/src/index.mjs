@@ -27,6 +27,7 @@ import { readMcpServerSettings, writeMcpServerSettings } from "./mcp-servers.mjs
 import { grantWindowsWorkspaceOwnerRight } from "./windows-workspace-acl.mjs";
 import { imagePromptParts } from "./prompt-images.mjs";
 import { fileUploadRequests } from "./prompt-files.mjs";
+import { syncZcodeGlobalInstructions } from "./zcode-instructions.mjs";
 
 export class DshBackend extends EventEmitter {
   constructor(options) {
@@ -371,6 +372,7 @@ export class DshBackend extends EventEmitter {
     if (!message.trim() && imageParts.length === 0 && fileRequests.length === 0)
       throw new Error("Enter a message or attach a file first.");
     await this.start();
+    await syncZcodeGlobalInstructions(this.lifecycle.dshHome);
     if (!this.followers.has(sessionId)) await this.resumeSession(sessionId);
     if (model) await this.selectModel(sessionId, model);
     const annotations = await this.annotations.selectForPrompt(sessionId, annotationIds);

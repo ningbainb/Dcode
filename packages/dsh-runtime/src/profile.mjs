@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeManagedMcpPatch } from "./agent-plugins.mjs";
+import { syncZcodeGlobalInstructions } from "./zcode-instructions.mjs";
 
 const require = createRequire(import.meta.url);
 export const PROFILE_NAME = "dcode";
@@ -13,6 +14,7 @@ export const PROFILE_NAME = "dcode";
 export async function ensureDcodeProfile(dshHome, nodeExecutable = process.execPath) {
   const profileDir = join(dshHome, "profiles", PROFILE_NAME);
   await mkdir(profileDir, { recursive: true });
+  await syncZcodeGlobalInstructions(dshHome);
   const localBundles = {
     "dcode-zcode-session-import": fileURLToPath(
       new URL("../vendor/dcode-zcode-session-import/", import.meta.url),

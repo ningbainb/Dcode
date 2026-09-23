@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { mkdir, mkdtemp, readFile, unlink, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { syncZcodeGlobalInstructions } from "../src/zcode-instructions.mjs";
+
+test("ZCode global instructions update DSH's native file without replacing local instructions", async () => {
+  const base = resolve(import.meta.dirname, "../../../../.data");
+  await mkdir(base, { recursive: true });
+  const root = await mkdtemp(join(base, "zcode-instructions-"));
+  const userHome = join(root, "home");
+  const dshHome = join(root, "dsh");
+  await mkdir(join(userHome, ".zcode"), { recursive: true });
+  await mkdir(dshHome, { recursive: true });
+  const source = join(userHome, ".zcode", "AGENTS.md");
+  const target = join(dshHome, "AGENTS.md");
+  await writeFile(target, "Existing DSH instruction.\n");
+  await writeFile(source, "ZCode original instruction.\n");
+  assert.equal(await syncZcodeGlobalInstructions(dshHome, { userHome }), true);
+  assert.match(await readFile(target, "utf8"), /Existing DSH instruction\.[\s\S]*ZCode original instruction\./);
+  assert.equal(await syncZcodeGlobalInstructions(dshHome, { userHome }), false);
+  await writeFile(source, "ZCode revised instruction.\n");
+  await syncZcodeGlobalInstructions(dshHome, { userHome });
+  const revised = await readFile(target, "utf8");
+  assert.match(revised, /Existing DSH instruction/);
+  assert.match(revised, /ZCode revised instruction/);
+  assert.doesNotMatch(revised, /ZCode original instruction/);
+  await unlink(source);
+  await syncZcodeGlobalInstructions(dshHome, { userHome });
+  assert.equal(await readFile(target, "utf8"), "Existing DSH instruction.");
+});

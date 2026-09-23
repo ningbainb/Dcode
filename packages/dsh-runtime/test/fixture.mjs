@@ -35,6 +35,7 @@ const server = createServer(async (request, response) => {
     const toolResults = (body.messages ?? []).filter(message => message.role === 'tool').length;
     const lastHumanUser = (body.messages ?? []).filter(message => message.role === 'user' &&
       !String(message.content).startsWith('Current runtime context.') &&
+      !String(message.content).startsWith('<system-reminder>') &&
       !String(message.content).includes('<available_skills>')).at(-1);
     const filePath = fileReadPrompt
       ? /verbatim read-only copy saved at "([^"]+)"/.exec(String(lastHumanUser?.content ?? ''))?.[1]

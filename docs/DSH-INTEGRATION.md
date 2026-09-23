@@ -22,6 +22,8 @@ DSH 是会话、消息、模型执行、工具调用和权限请求的事实来�
 
 当前桌面功能在 Windows 打包应用里用本地合成模型夹具通过了双会话、项目切换、重启恢复、停止继续、工具输出、文件编辑、Diff 和终端验收。这个测试证明桌面到运行时的本地链路，不证明某个在线模型账号或所有提供商已经实测。[模型供应商设置](DSH-MODEL-PROVIDER-SETTINGS.md) 复用 ZCode 的交互语言并保存到 DSH Profile。Dcode 的 MCP 设置由 DSH Profile 托管，详见 [MCP 接入](DSH-MCP-SERVERS.md)。ZCode 工作区、用户级 `.zcode/skills` 和已启用插件贡献的 Markdown 技能已通过 [DSH 技能提供器](DSH-ZCODE-SKILLS.md) 接入；已启用的 ZCode Markdown 自定义命令也可在 DSH 会话输入框调用，详见 [命令接入](DSH-ZCODE-COMMANDS.md)。本地桌面的设置侧边栏保留对应的“技能”“命令”管理入口，写入同一份 ZCode 文件和启用配置。[子智能体设置](DSH-SUBAGENTS.md) 控制 DSH 原生委派深度。插件的其他组件及 ZCode 的记忆、自定义子智能体文件、自动化和钩子设置尚未逐项验证能控制 DSH 执行，本地 DSH 工作区不把它们宣传为已贯通能力。
 
+ZCode 全局 `~/.zcode/AGENTS.md` 已通过 [DSH 原生指令加载器](DSH-ZCODE-INSTRUCTIONS.md) 接入；同一 DSH 会话在下一条提示中能收到源文件更新或移除通知。这是指令文件衔接，不等同于 ZCode 记忆、自动化或钩子设置已接入。
+
 实现与契约可从 [DSH 运行时](../packages/dsh-runtime/CONTRACT.md)、[工作区会话](../packages/ui/src/dsh/CONTRACT.md) 和 [云备份](../packages/services/src/cloud-backup/CONTRACT.md) 开始阅读。移植代码的上游修订与许可证见 [PROVENANCE.md](../packages/dsh-runtime/vendor/PROVENANCE.md)。
 
 内核依赖统一固定到 `@deepseek-ai/dsh`、`dsh-base`、`dsh-mcp-client`、`dsh-web-app` 同一发布版本 `0.1.7-alpha.2`。Dcode 只使用项目锁文件和打包内容中的内核，不自动混用用户全局安装的 DSH。版本升级需要同时验证 Profile 启动、设置读写、模型目录、会话请求、插件桥接与桌面打包；若上游协议变更，先适配桥接层再交付。

@@ -25,6 +25,12 @@ map, and invalidates DSH's native skill catalog when these files change.
 DSH keeps ownership of invocation, precedence, and the model-facing `skill`
 tool. See `docs/DSH-ZCODE-SKILLS.md`.
 
+The Dcode profile also synchronizes the current user's `~/.zcode/AGENTS.md`
+into a marked section of its private `$DSH_HOME/AGENTS.md` before startup and
+before prompt admission. Unmarked content in that private file is preserved.
+DSH's native agent-instructions plugin remains the owner of scope, updates and
+removal notices. See `docs/DSH-ZCODE-INSTRUCTIONS.md`.
+
 The Dcode Agent plugin state is owned by `DshBackend` in its own data directory.
 An opt-in Playwright MCP server provides isolated browser control. An opt-in
 Windows GUI MCP server provides Windows UI Automation after installing its
