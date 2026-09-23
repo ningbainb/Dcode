@@ -15,6 +15,12 @@ pack:dcode -> production desktop build -> renderer/runtime checks -> NSIS packag
 ```
 
 The build must stop on a failed child build before touching the installer.
+On Windows, keep `ELECTRON_CACHE`, `ELECTRON_BUILDER_CACHE`, the workspace and
+the build temporary directory on the same volume. The v0.2.7 build failed when
+Electron downloaded into a C: cache while its temporary zip was on E:; setting
+`ELECTRON_CACHE=E:\dcode\.cache\electron` and
+`ELECTRON_BUILDER_CACHE=E:\dcode\.cache\electron-builder` allowed the verified
+build to complete. Use the repository-pinned Node 24.14.0 and pnpm 10.33.2.
 Development builds retain their own environment. Acceptance is a clean `pack:dcode`
 without caller-provided `ZCODE_ENV`: the unpacked application displays “Check for
 updates”, `app-update.yml` targets `ningbainb/Dcode`, and a packaged smoke test
@@ -23,13 +29,10 @@ GitHub release test; local metadata consistency alone cannot prove download and
 installation. For v0.2.5, an isolated v0.2.4 application discovered the release,
 downloaded an installer with the published SHA-256, and reached restart-to-update.
 The installer was not run, so the final replacement/restart path remains unverified.
-For v0.2.6, an isolated v0.2.5 application discovered the public GitHub release
-and entered the real download flow. The network transfer reached 5% but was
-stopped because the observed rate was about 90 KB/s. A second isolated run
-seeded the exact v0.2.6 release installer into the updater cache; the app
-validated that cache, reached `update-downloaded`, and the cached installer
-matched the release SHA-256. Neither a complete network transfer for this
-version nor installation/restart has been verified.
+For v0.2.6, an isolated v0.2.5 application completed the real GitHub download,
+reached `update-downloaded`, and matched the release SHA-256. For v0.2.7,
+the same checks passed from an isolated v0.2.6 application. Neither version's
+explicit installer execution and restart has been verified in an isolated system.
 For v0.2.6, the package must contain DSH `0.1.7-alpha.2` and the private Windows
 DSH temp directory repair. A default `workspace-write` desktop test must reproduce
 the project ACL error, invoke the visible repair action and verify that a new
