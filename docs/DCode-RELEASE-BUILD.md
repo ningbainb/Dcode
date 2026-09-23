@@ -39,3 +39,12 @@ prebuild; a missing sidecar is a package failure, not an optional artifact.
 When the hoisted `node-pty` package is copied into ASAR staging, include only
 the target platform's `prebuilds` subtree and omit install-machine `build` and
 `bin` directories. The existing native-resource policy must pass afterward.
+
+If a full electron-builder run is interrupted after producing a verified
+`win-unpacked` directory, the `--prepackaged` path skips electron-builder's
+`onAfterPack` hook that normally creates `resources/app-update.yml`. Run
+`node packages/desktop/scripts/prepare-dcode-prepackaged.mjs` before NSIS. It
+writes the GitHub update config, adds it to the Windows install manifest,
+refreshes executable resource integrity, and rechecks the renderer and physical
+DSH runtime. Then run electron-builder with `--prepackaged` and verify the final
+installer using `node scripts/verify-dcode-release.mjs`.
