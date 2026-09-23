@@ -25,7 +25,7 @@ DSH 是会话、消息、模型执行、工具调用和权限请求的事实来�
 实现与契约可从 [DSH 运行时](../packages/dsh-runtime/CONTRACT.md)、[工作区会话](../packages/ui/src/dsh/CONTRACT.md) 和 [云备份](../packages/services/src/cloud-backup/CONTRACT.md) 开始阅读。移植代码的上游修订与许可证见 [PROVENANCE.md](../packages/dsh-runtime/vendor/PROVENANCE.md)。
 
 内核依赖统一固定到 `@deepseek-ai/dsh`、`dsh-base`、`dsh-mcp-client`、`dsh-web-app` 同一发布版本 `0.1.7-alpha.2`。Dcode 只使用项目锁文件和打包内容中的内核，不自动混用用户全局安装的 DSH。版本升级需要同时验证 Profile 启动、设置读写、模型目录、会话请求、插件桥接与桌面打包；若上游协议变更，先适配桥接层再交付。
-Windows 安装包的物理 runtime 部署目录由 DSH 包版本与锁文件摘要共同命名。构建脚本与 electron-builder 使用同一个路径解析函数；依赖变化时创建新目录，而不是复用旧 `.dcode-deploy-ready` 标记。打包验证必须读取物理 runtime 中四个 DSH 直连包的实际版本并与项目清单一致。
+物理 runtime 部署目录由操作系统、CPU 架构、DSH 包版本与锁文件摘要共同命名。构建脚本与 electron-builder 使用同一个路径解析函数；目标平台或依赖变化时创建新目录，而不是复用旧 `.dcode-deploy-ready` 标记。打包验证必须读取物理 runtime 中四个 DSH 直连包的实际版本并与项目清单一致。
 运行时验证必须从 Dcode 适配器的真实模块解析路径读取 `@deepseek-ai/dsh/package.json`，不能仅凭锁文件或根目录的包版本判断。0.1.7 的 app-boot 不再导出旧的 Profile module-fallback 修复函数，改由启动时创建不可变的 runtime resolution，并在 `boot` 期间挂载 `PluginPackages` 服务；Dcode launcher 复用这条上游启动路径。缺少该服务时插件会集体加载失败，不能以只通过静态类型检查视为升级完成。
 0.1.7 的浏览器令牌兑换仍返回带 session cookie 的 HTTP 303，但 `Location` 变为相对路径 `./`。就绪探测只接受 `./` 或 `/` 这两个首页重定向，并要求响应携带 cookie；跳转状态本身不足以证明运行时已就绪。
 在当前 Windows 非管理员账户上，0.1.7-alpha.2 默认 `workspace-write` PowerShell 沙箱调用 `SetNamedSecurityInfoW` 给工作区写入 ACL 时可能返回 Win32 5；全新测试目录也复现。Dcode 生产 Profile 不自动关闭沙箱，而是提供下述由用户触发的项目目录权限修复。发布新 Windows 安装包前仍需完成桌面端修复入口与默认沙箱的端到端验收。

@@ -7,6 +7,7 @@ import { brandDcodeExecutable } from "./scripts/brand-dcode-executable.mjs";
 import { verifyPackagedRenderer } from "./scripts/verify-dcode-renderer.mjs";
 import { verifyDcodeRuntime } from "./scripts/verify-dcode-runtime.mjs";
 import { resolveDcodeRuntimeDeploy } from "./scripts/runtime-deploy-path.mjs";
+import { resolveDcodePackagedResources } from "./scripts/dcode-packaged-resources.mjs";
 
 const desktop = import.meta.dirname;
 const metadata = JSON.parse(readFileSync(resolve(desktop, "package.json"), "utf8"));
@@ -69,9 +70,10 @@ export default {
   publish: { provider: "github", owner: "ningbainb", repo: "Dcode" },
   afterPack: async (context) => {
     await base.afterPack(context);
+    const resources = resolveDcodePackagedResources(context);
     if (context.electronPlatformName === "win32")
       await brandDcodeExecutable(resolve(context.appOutDir, "Dcode.exe"));
-    verifyPackagedRenderer(resolve(context.appOutDir, "resources/app.asar"));
-    verifyDcodeRuntime(resolve(context.appOutDir, "resources/dsh-runtime"));
+    verifyPackagedRenderer(resolve(resources, "app.asar"));
+    verifyDcodeRuntime(resolve(resources, "dsh-runtime"));
   },
 };
