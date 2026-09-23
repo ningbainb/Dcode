@@ -6,6 +6,8 @@ The Model Providers page keeps the compact ZCode settings layout: provider list 
 
 The page reads DSH's model catalog and `llm-pi-ai` settings view. Its add catalog adapts ZCode's checked-in independent API templates and model IDs, including regional Alibaba Cloud and OpenCode variants, while excluding Z.ai/BigModel plans and duplicate native DeepSeek. ZCode's registry is a build-time source for choices, never a second configuration owner. Protocol names are mapped to DSH's three supported APIs. Templates are editable starting points; users can change endpoint, protocol, model IDs and capacity before saving. Model choices populate a single draft row on selection, not every model in the provider, so the user explicitly chooses what to enable. Credentials remain in DSH's credential store and are never returned to the renderer. A saved provider can be edited, have multiple models, or be removed. A provider already owned by DSH's built-in catalog may be shown but must not be silently overwritten by template creation.
 
+The desktop provider navigation follows the existing ZCode settings language: compact grouped rows, a separate DSH built-in group, the configured API group, clear selected and credential states, and an add-provider row in the same navigation. Adding a provider opens the searchable template catalog in the detail pane. The catalog only contains independent API providers and custom setup; ZCode account, Z.ai/BigModel subscriptions, Start Plan, and ZCode-branded provider entries are absent. Clicking an already configured template selects that saved provider instead of creating a duplicate. These groups and selections are UI projections of the DSH view, not another settings store.
+
 The catalog has a local search across provider names, IDs and model IDs, and groups API templates separately from custom setup. The configured-provider sidebar has a separate local filter once the list is long. Each card shows protocol and model count. The selected provider shows credential status and its model count; DSH's native DeepSeek models are visible as read-only rows. Custom provider models use individual cards with model identity, source-catalog model suggestions and token-limit controls, and can be reordered or removed before saving. The editor exposes only DSH-supported fields; ZCode-only subscription, account and unsupported model options never appear. Search, selection, card order and unsaved edits are renderer-local; saving remains one DSH provider command.
 
 ## Ownership and write sequence
@@ -31,6 +33,7 @@ If settings or credential persistence fails, report the failure and keep the dra
 - Native DeepSeek model identities are visible; custom model order is retained after save and refresh.
 - Missing keys, invalid URLs/model IDs, and stale revisions produce clear feedback; keys are not returned to the UI.
 - Desktop UI smoke and an isolated DSH settings round-trip verify the user path.
+- The desktop UI can open the add catalog from the provider rail, search templates, choose one, and return to saved providers without seeing a ZCode account or plan entry.
 
 ## Advanced model capabilities
 

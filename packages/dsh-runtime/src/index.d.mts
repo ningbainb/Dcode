@@ -9,6 +9,11 @@ export interface Model {
   model: string;
   label: string;
 }
+export interface SubagentSettingsView {
+  maxDepth: number;
+  revision: number;
+  writable: boolean;
+}
 export interface Session {
   id: string;
   title: string;
@@ -102,6 +107,8 @@ export class DshBackend extends EventEmitter {
   installWindowsGuiPlugin(): Promise<AgentPluginStatus>;
   setAgentPluginEnabled(id: "browser" | "windowsGui", enabled: boolean): Promise<AgentPluginStatus>;
   listModels(): Promise<Model[]>;
+  listSubagentSettings(): Promise<SubagentSettingsView>;
+  updateSubagentSettings(maxDepth: number, expectedRevision: number): Promise<SubagentSettingsView>;
   listProviderSettings(): Promise<{
     revision: number;
     writable: boolean;

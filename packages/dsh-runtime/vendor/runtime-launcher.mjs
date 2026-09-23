@@ -6,12 +6,13 @@ import { stringify } from 'yaml'
 import {
   boot,
   composeEntries,
-  healProfilesModuleFallback,
+  createRuntimeResolution,
   installFailLoud,
   loadLayeredEnv,
   loadOptionalPatches,
   loadOverlayPatches,
   loadProfileDirectory,
+  PluginPackages,
 } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { installProxyFromEnvironment } from '@deepseek-ai/dsh-http-proxy'
@@ -229,7 +230,7 @@ async function run() {
   const runtimeManifest = JSON.parse(readFileSync(installAnchor, 'utf8'))
   const pipeIdentity = runtimePipeIdentityFromEnvironment()
   const profile = loadProfileDirectory(NAME, profileDir, installAnchor)
-  await healProfilesModuleFallback({ installAnchor, profile, home: dshHome })
+  const resolution = await createRuntimeResolution({ installAnchor, profile, home: dshHome })
   const rootConfig = join(profile.dir, PROFILE_ROOT_FILENAME)
   writeFileSync(rootConfig, PROFILE_ROOT_CONFIG)
   markStartup('profile')
@@ -295,10 +296,11 @@ async function run() {
     overlays: overlayPatches,
     telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
   }
-  ctx = await boot(NAME, rootConfig, allPatches, hostCtx => {
+  ctx = await boot(NAME, rootConfig, allPatches, async hostCtx => {
     ctx = hostCtx
     hostCtx.provide('profileContext', profileContext)
     hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment)
+    await hostCtx.plugin(PluginPackages, { resolution })
     provideCmdline(hostCtx, {
       args: invocation.args,
       exit: code => { void shutdown(code) },

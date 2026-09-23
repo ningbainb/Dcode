@@ -38,6 +38,22 @@ test("history reconstructs tool output and ignores duplicate durable events", ()
   assert.equal(state.rows[0].text, "exit 0");
   assert.deepEqual(projectFrame(state, records[0]), state);
 });
+test("DSH 0.1.7 tool messages keep output and error state across snapshots", () => {
+  const records = [
+    event(0, "tool/call", { callId: "read-1", name: "read", arguments: "{}" }),
+    event(1, "tool/result", {
+      message: {
+        role: "tool",
+        toolCallId: "read-1",
+        content: [{ type: "text", text: "File not found" }],
+        isError: true,
+      },
+    }),
+  ];
+  const state = projectFrame(emptyProjection(), { type: "snapshot", records });
+  assert.equal(state.rows[0].text, "File not found");
+  assert.equal(state.rows[0].state, "output-error");
+});
 test("model errors settle the busy state with a readable message", () => {
   const state = projectFrame(
     { ...emptyProjection(), busy: true },

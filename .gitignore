@@ -74,4 +74,5 @@ packages/desktop/dcode-runtime/
 packages/desktop/dcode-runtime-v1/
 packages/desktop/dcode-runtime-v2/
 packages/desktop/dcode-runtime-v3/
+packages/desktop/dcode-runtime-*/
 artifacts/

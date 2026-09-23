@@ -49,6 +49,12 @@ const server = createServer(async (request, response) => {
       response.end('data: [DONE]\n\n');
       return;
     }
+    if (JSON.stringify(lastHumanUser).includes('DCODE_SUBAGENT_CHILD')) {
+      send({ role: 'assistant', content: 'DCODE_SUBAGENT_CHILD_OK' });
+      send({}, 'stop');
+      response.end('data: [DONE]\n\n');
+      return;
+    }
     if ((body.tools?.length ?? 0) > 0 && toolResults < commands.length) {
       const [name, args] = commands[toolResults];
       assert.ok(body.tools.some(tool => tool.function?.name === name), `${name} tool missing`);

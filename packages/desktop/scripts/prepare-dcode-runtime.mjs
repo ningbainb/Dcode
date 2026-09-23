@@ -2,10 +2,11 @@ import { spawn } from "node:child_process";
 import { copyFile, writeFile, cp } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { resolveDcodeRuntimeDeploy } from "./runtime-deploy-path.mjs";
 
 const desktop = resolve(import.meta.dirname, "..");
 const root = resolve(desktop, "../..");
-const target = resolve(desktop, "dcode-runtime-v3");
+const { target, deployRelativePath, version } = resolveDcodeRuntimeDeploy();
 const readyMarker = resolve(target, ".dcode-deploy-ready");
 if (!existsSync(readyMarker)) {
   await new Promise((resolveRun, reject) => {
@@ -18,7 +19,7 @@ if (!existsSync(readyMarker)) {
         "@dcode/dsh-runtime",
         "deploy",
         "--prod",
-        "packages/desktop/dcode-runtime-v3",
+        deployRelativePath,
       ],
       {
         cwd: root,
@@ -33,7 +34,7 @@ if (!existsSync(readyMarker)) {
       code === 0 ? resolveRun() : reject(new Error(`Runtime deploy exited ${code}`)),
     );
   });
-  await writeFile(readyMarker, "agent-plugins-skills-runtime-v3\n");
+  await writeFile(readyMarker, `${version}\n`);
 }
 for (const directory of ["src", "vendor"]) {
   await cp(resolve(root, "packages/dsh-runtime", directory), resolve(target, directory), {

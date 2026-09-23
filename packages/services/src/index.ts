@@ -19,6 +19,7 @@ export type {
   DshProviderModelSettings,
   DshProviderSettings,
   DshProviderSettingsView,
+  DshSubagentSettingsView,
   DshProviderDraft,
   DshAgentPluginStatus,
   DshMcpServer,

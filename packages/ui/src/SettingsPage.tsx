@@ -59,6 +59,7 @@ import { DshSettings } from "@/dsh/DshSettings.js";
 import { DshChatFontSettings } from "@/dsh/DshChatFontSettings.js";
 import { DshAgentPluginsSection } from "@/dsh/DshAgentPluginsSection.js";
 import { DshMcpSettings } from "@/dsh/DshMcpSettings.js";
+import { DshSubagentsSection } from "@/dsh/DshSubagentsSection.js";
 import { ZcodeSessionImportSection } from "@/dsh/ZcodeSessionImportSection.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
@@ -678,6 +679,7 @@ export function SettingsPage({
       "modelProvider",
       "plugin",
       "mcp",
+      "subagents",
       "skill",
       "commands",
       "shortcuts",
@@ -1692,16 +1694,7 @@ export function SettingsPage({
                       </div>
                       <div className="space-y-8">
                         {usesDshRuntimeSettings &&
-                        [
-                          "memory",
-                          "plugin",
-                          "mcp",
-                          "skill",
-                          "subagents",
-                          "automations",
-                          "commands",
-                          "hooks",
-                        ].includes(activeSection) ? (
+                        ["memory", "automations", "hooks"].includes(activeSection) ? (
                           <p
                             role="note"
                             className="rounded-lg border border-border/60 bg-card/60 p-3 text-ui-sm text-foreground-subtle"
@@ -1971,6 +1964,10 @@ export function SettingsPage({
                             workspaceIdentity={activeWorkspaceIdentity}
                             workspacePath={activeWorkspacePath ?? undefined}
                           />
+                        ) : activeSection === "subagents" && usesDshRuntimeSettings ? (
+                          <ServiceProvider services={localHostServices}>
+                            <DshSubagentsSection />
+                          </ServiceProvider>
                         ) : activeSection === "subagents" ? (
                           <SubagentsSection
                             onManageModels={handleOpenModelProviderSettings}

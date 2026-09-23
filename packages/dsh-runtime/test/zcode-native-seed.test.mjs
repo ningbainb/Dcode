@@ -52,15 +52,14 @@ test("ZCode text, compaction and completed tools become valid native DSH history
   const history = session.deriveMessages();
   assert.deepEqual(
     history.map((message) => message.role),
-    ["user", "assistant", "user", "assistant"],
+    ["user", "assistant", "tool", "assistant"],
   );
   assert.ok(
     history[1].content.some((block) => block.type === "tool-call" && block.id === "call-1"),
   );
   assert.ok(
-    history[2].content.some(
-      (block) => block.type === "tool-result" && block.toolCallId === "call-1",
-    ),
+    history[2].toolCallId === "call-1" &&
+      history[2].content.some((block) => block.type === "text" && block.text === "file contents"),
   );
   assert.ok(JSON.stringify(history).includes("Plan: edit a.txt next."));
   assert.equal(result.events.at(-1).type, "turn/end");
@@ -94,7 +93,8 @@ test("incomplete tools get an interrupted result and attachments are disclosed",
     result.events,
   ).deriveMessages();
   assert.ok(JSON.stringify(history).includes("attachment"));
-  assert.ok(history.at(-1).content.some((block) => block.type === "tool-result" && block.isError));
+  assert.equal(history.at(-1).role, "tool");
+  assert.equal(history.at(-1).isError, true);
 });
 
 test("bounded seed keeps an opening anchor, summary and recent turn", () => {

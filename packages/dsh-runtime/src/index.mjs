@@ -10,6 +10,7 @@ import {
   listDshProviderSettings,
   saveDshProvider,
 } from "./provider-settings.mjs";
+import { listDshSubagentSettings, updateDshSubagentSettings } from "./subagent-settings.mjs";
 import {
   SessionAnnotationStore,
   buildPromptWithSessionAnnotations,
@@ -203,6 +204,14 @@ export class DshBackend extends EventEmitter {
   async deleteProvider(id, expectedRevision) {
     await this.start();
     await deleteDshProvider(this.transport, id, expectedRevision);
+  }
+  async listSubagentSettings() {
+    await this.start();
+    return listDshSubagentSettings(this.transport);
+  }
+  async updateSubagentSettings(maxDepth, expectedRevision) {
+    await this.start();
+    return updateDshSubagentSettings(this.transport, maxDepth, expectedRevision);
   }
   async listSessions(workspacePath) {
     await this.start();

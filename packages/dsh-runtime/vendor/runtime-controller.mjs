@@ -381,7 +381,7 @@ export async function probeHttpReady(
       if (response.ok) return
       if (
         response.status === 303
-        && response.headers?.get?.('location') === '/'
+        && ['/', './'].includes(response.headers?.get?.('location'))
         && response.headers?.get?.('set-cookie') !== null
       ) return
       lastError = new Error(`runtime health probe returned HTTP ${response.status}`)

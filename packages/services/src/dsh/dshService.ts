@@ -37,6 +37,9 @@ export function createDshService(autoStart = false): IDshService {
     health: async () => (await backend).health(),
     listModels: async () => (await backend).listModels(),
     listProviderSettings: async () => (await backend).listProviderSettings(),
+    listSubagentSettings: async () => (await backend).listSubagentSettings(),
+    updateSubagentSettings: async (maxDepth, expectedRevision) =>
+      (await backend).updateSubagentSettings(maxDepth, expectedRevision),
     saveProvider: async (draft, expectedRevision, creating) =>
       (await backend).saveProvider(draft, expectedRevision, creating),
     deleteProvider: async (id, expectedRevision) =>

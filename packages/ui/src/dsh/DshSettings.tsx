@@ -23,6 +23,7 @@ import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js"
 import { ApiKeyInput } from "@/settings/model-provider-section/ApiKeyInput.js";
 import { BooleanModelOption } from "@/settings/model-provider-section/ProviderModelMetadataFields.js";
 import { ModelSettingsGroup } from "@/settings/model-provider-section/ProviderModelSettingsGroups.js";
+import { DshProviderNavigation } from "./DshProviderNavigation.js";
 import providerCatalog from "./provider-catalog.json" with { type: "json" };
 
 const TEMPLATES = providerCatalog;
@@ -38,6 +39,7 @@ const COPY = {
     provider: "供应商",
     custom: "自定义供应商",
     native: "DSH 内置",
+    configuredGroup: "已配置 API",
     newProvider: "新供应商",
     name: "显示名称",
     id: "供应商 ID",
@@ -82,6 +84,7 @@ const COPY = {
     moveDown: "下移模型",
     nativeModels: "DSH 内置模型由运行时管理，不能在这里编辑。",
     nativeHint: "DeepSeek 是 DSH 内置供应商，模型由 DSH 管理；这里只需设置或更新 API Key。",
+    keyConfigured: "已配置密钥",
     saved: "已保存到 DSH，聊天模型列表已刷新。",
     deleted: "供应商已删除。",
     deleteConfirm: "确定删除这个供应商配置吗？已有会话不会删除。",
@@ -102,6 +105,7 @@ const COPY = {
     provider: "Provider",
     custom: "Custom provider",
     native: "Built into DSH",
+    configuredGroup: "Configured APIs",
     newProvider: "New provider",
     name: "Display name",
     id: "Provider ID",
@@ -147,6 +151,7 @@ const COPY = {
     nativeModels: "Built-in DSH models are managed by the runtime and cannot be edited here.",
     nativeHint:
       "DeepSeek is built into DSH; DSH manages its models. Set or update its API key here.",
+    keyConfigured: "Key configured",
     saved: "Saved to DSH. Chat models have been refreshed.",
     deleted: "Provider removed.",
     deleteConfirm: "Delete this provider configuration? Existing sessions will remain.",
@@ -182,12 +187,6 @@ function newDraft(template?: (typeof TEMPLATES)[number]): DshProviderDraft {
   };
 }
 
-function logoKey(provider: DshProviderSettings): string {
-  return provider.builtIn
-    ? "deepseek"
-    : (TEMPLATES.find((item) => item.id === provider.id)?.logo ?? "");
-}
-
 export function DshSettings() {
   const { dshService } = useServices();
   const platform = usePlatform();
@@ -211,9 +210,6 @@ export function DshSettings() {
       .includes(catalogQuery.trim().toLowerCase()),
   );
   const modelSuggestions = TEMPLATES.find((template) => template.id === draft?.id)?.models ?? [];
-  const visibleProviders = view?.providers.filter((provider) =>
-    `${provider.name} ${provider.id}`.toLowerCase().includes(providerQuery.trim().toLowerCase()),
-  );
 
   const refresh = useCallback(
     async (selectId?: string) => {
@@ -346,17 +342,19 @@ export function DshSettings() {
     });
   };
 
+  const openCatalog = () => {
+    setMode("catalog");
+    setCatalogQuery("");
+    setNotice("");
+  };
+
   return (
     <section className="space-y-4" data-testid="dsh-model-settings">
       <div className="flex items-start justify-between gap-3">
         <p className="text-ui-base leading-6 text-foreground-subtle">{t.intro}</p>
         <SettingsResourceHeaderActions
           onRefresh={() => void refresh()}
-          onNew={() => {
-            setMode("catalog");
-            setCatalogQuery("");
-            setNotice("");
-          }}
+          onNew={openCatalog}
           refreshing={loading}
           newDisabled={!view?.writable}
           refreshLabel={t.refresh}
@@ -368,57 +366,22 @@ export function DshSettings() {
           className="grid min-h-[36rem] grid-cols-[56px_minmax(0,1fr)] md:grid-cols-[224px_minmax(0,1fr)]"
           data-model-provider-split-panel="true"
         >
-          <nav className="min-w-0 space-y-1 border-r border-border p-2" aria-label={t.provider}>
-            <p className="px-2 py-2 text-ui-xs font-semibold text-foreground-subtle max-md:sr-only">
-              {t.provider}
-            </p>
-            {(view?.providers.length ?? 0) > 4 && (
-              <Input
-                aria-label={t.searchConfigured}
-                value={providerQuery}
-                onChange={(event) => setProviderQuery(event.target.value)}
-                placeholder={t.search}
-                className="mb-2 max-md:hidden"
-              />
-            )}
-            {visibleProviders?.map((provider) => (
-              <button
-                key={provider.id}
-                type="button"
-                data-testid="dsh-provider-nav-item"
-                title={provider.name}
-                aria-selected={selectedId === provider.id && mode === "detail"}
-                onClick={() => {
-                  setMode("detail");
-                  setSelectedId(provider.id);
-                  setNotice("");
-                }}
-                className={`flex h-9 w-full items-center gap-2 rounded-lg border px-2 text-left text-ui-base transition-colors max-md:justify-center ${
-                  selectedId === provider.id && mode === "detail"
-                    ? "border-border-hover bg-card-selected"
-                    : "border-transparent hover:bg-hover"
-                }`}
-              >
-                <ProviderLogo
-                  logo={{ type: "builtin", key: logoKey(provider) }}
-                  className="size-4"
-                />
-                <span className="min-w-0 flex-1 truncate max-md:sr-only">{provider.name}</span>
-                <span className="shrink-0 text-ui-xs text-foreground-subtlest max-md:hidden">
-                  {provider.models.length}
-                </span>
-                <span
-                  className={`size-1.5 shrink-0 rounded-full max-md:hidden ${provider.hasApiKey ? "bg-success" : "bg-foreground-subtlest"}`}
-                />
-              </button>
-            ))}
-            {selectedId === "new" && mode === "detail" && (
-              <div className="flex h-9 items-center gap-2 rounded-lg border border-border-hover bg-card-selected px-2 text-ui-base">
-                <Plus className="size-4" />
-                <span className="truncate max-md:sr-only">{draft?.name || t.newProvider}</span>
-              </div>
-            )}
-          </nav>
+          <DshProviderNavigation
+            providers={view?.providers ?? []}
+            selectedId={selectedId}
+            mode={mode}
+            draftName={draft?.name}
+            query={providerQuery}
+            writable={Boolean(view?.writable)}
+            labels={t}
+            onQueryChange={setProviderQuery}
+            onSelect={(id) => {
+              setMode("detail");
+              setSelectedId(id);
+              setNotice("");
+            }}
+            onAdd={openCatalog}
+          />
           <div className="min-w-0 p-4 pb-12 sm:p-6" data-model-provider-detail-scroll="true">
             {mode === "catalog" ? (
               <div className="space-y-4" data-testid="dsh-provider-catalog">

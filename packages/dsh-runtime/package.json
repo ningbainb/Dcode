@@ -2,13 +2,13 @@
   "name": "@dcode/dsh-runtime",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "license": "Apache-2.0",
   "files": [
     "src",
     "vendor",
     "CONTRACT.md"
   ],
+  "type": "module",
   "exports": {
     ".": {
       "types": "./src/index.d.mts",
@@ -19,10 +19,10 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@deepseek-ai/dsh": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-base": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-mcp-client": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-web-app": "0.1.6-alpha.2",
+    "@deepseek-ai/dsh": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-base": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-mcp-client": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-web-app": "0.1.7-alpha.2",
     "@playwright/mcp": "0.0.82",
     "chokidar": "5.0.0",
     "ws": "8.20.0",

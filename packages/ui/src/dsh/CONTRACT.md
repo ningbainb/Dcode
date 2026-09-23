@@ -16,6 +16,11 @@ DSH events update the selected session only. On turn completion, refresh the ind
 new titles appear in the sidebar. Reconnect and restore use backend snapshots and their
 cursor rather than a second persistent transcript. Project links, Git/Diff and cloud backup
 retain their existing owners.
+DSH 0.1.7 emits tool results as a tool-role message with `toolCallId`, text `content`, and
+message-level `isError`. The projection joins it to the preceding `tool/call` by ID,
+including when reconstructing a snapshot; it also accepts the older nested
+`tool-result` block for previously imported history. A failed tool result must stay
+visibly failed rather than disappearing from the conversation.
 
 Acceptance: create two sessions from the sidebar, switch between them and projects, send
 in each, restart the app, restore the chosen session, and verify no cross-session messages

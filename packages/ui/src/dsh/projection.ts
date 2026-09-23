@@ -135,9 +135,12 @@ export function projectFrame(state: DshProjection, input: unknown): DshProjectio
   }
   if (event.type === "tool/result") {
     const message = record(data.message);
-    for (const value of Array.isArray(message.content) ? message.content : []) {
-      const block = record(value);
-      if (block.type !== "tool-result") continue;
+    const legacyBlocks = (Array.isArray(message.content) ? message.content : [])
+      .map(record)
+      .filter((block) => block.type === "tool-result");
+    // DSH 0.1.7 将结果和错误状态放在 tool-role message 本身；旧会话仍可能是嵌套块。
+    const results = legacyBlocks.length ? legacyBlocks : message.toolCallId ? [message] : [];
+    for (const block of results) {
       next = {
         ...next,
         rows: next.rows.map((row) =>

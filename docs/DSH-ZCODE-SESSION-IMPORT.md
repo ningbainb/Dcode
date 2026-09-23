@@ -31,6 +31,9 @@ results and ZCode compaction summaries. It creates a fresh native DSH session in
 same workspace through a DCode-owned profile plugin, then opens that session. Neither
 scan, archive import nor native session creation sends a model request. The first
 subsequent user prompt uses DSH's derived history. Historical tools are never rerun.
+For DSH 0.1.7, historical tool results are seeded as `role: tool` messages with
+top-level `toolCallId` and `isError`, plus text content. The legacy nested
+`tool-result` content block is not accepted by the new session log validator.
 
 The DCode adapter owns conversion and bounded context selection; full source rows
 remain in the archive. It keeps opening user messages, compaction summaries and
@@ -59,7 +62,7 @@ The [dsh-plugin-session-import](https://github.com/huguangyu666/dsh-plugin-sessi
 plugin (MIT, reviewed at `3d4c7342ec7b96a03549d76a4babc02dc5e8a5c5`) directly reads
 ZCode's `db.sqlite` and demonstrates native DSH seed mapping, tool-result pairing,
 compaction-summary recovery and workspace binding. Its published package declares
-`@deepseek-ai/dsh >=0.1.0-rc.6`; DCode pins `0.1.6-alpha.2`, whose agent metadata
+`@deepseek-ai/dsh >=0.1.0-rc.6`; DCode pins `0.1.7-alpha.2`, whose agent metadata
 contract differs. DCode therefore uses a small profile-local plugin and a mapper
 for its existing read-only archive. The external plugin is research and design
 reference, not an unverified runtime dependency or a second user-facing UI.

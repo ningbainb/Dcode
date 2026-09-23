@@ -13,6 +13,12 @@ export interface DshModel {
   label: string;
 }
 
+export interface DshSubagentSettingsView {
+  maxDepth: number;
+  revision: number;
+  writable: boolean;
+}
+
 export interface DshSession {
   id: string;
   title: string;
@@ -161,6 +167,11 @@ export interface IDshService {
   health(): Promise<DshRuntimeHealth>;
   listModels(): Promise<DshModel[]>;
   listProviderSettings(): Promise<DshProviderSettingsView>;
+  listSubagentSettings(): Promise<DshSubagentSettingsView>;
+  updateSubagentSettings(
+    maxDepth: number,
+    expectedRevision: number,
+  ): Promise<DshSubagentSettingsView>;
   saveProvider(
     draft: DshProviderDraft,
     expectedRevision: number,

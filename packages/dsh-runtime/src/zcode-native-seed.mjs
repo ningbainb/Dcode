@@ -219,15 +219,10 @@ export function buildZcodeNativeSeed(archive, { maxChars = DEFAULT_MAX_CHARS } =
             step,
             message: {
               id: `import-tool-${events.length}`,
-              role: "user",
-              content: [
-                {
-                  type: "tool-result",
-                  toolCallId: tool.id,
-                  content: [{ type: "text", text: tool.output }],
-                  isError: tool.failed,
-                },
-              ],
+              role: "tool",
+              toolCallId: tool.id,
+              content: [{ type: "text", text: tool.output }],
+              isError: tool.failed,
               source: { kind: "tool", callId: tool.id },
             },
           },

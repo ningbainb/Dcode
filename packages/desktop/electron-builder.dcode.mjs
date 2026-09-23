@@ -5,10 +5,12 @@ import { collectRuntimeModuleClosureEntries } from "./scripts/runtime-dependency
 import { brandDcodeExecutable } from "./scripts/brand-dcode-executable.mjs";
 import { verifyPackagedRenderer } from "./scripts/verify-dcode-renderer.mjs";
 import { verifyDcodeRuntime } from "./scripts/verify-dcode-runtime.mjs";
+import { resolveDcodeRuntimeDeploy } from "./scripts/runtime-deploy-path.mjs";
 
 const desktop = import.meta.dirname;
 const metadata = JSON.parse(readFileSync(resolve(desktop, "package.json"), "utf8"));
 const appVersion = JSON.parse(readFileSync(resolve(desktop, "../../package.json"), "utf8")).version;
+const runtimeDeploy = resolveDcodeRuntimeDeploy();
 const externalRoots = Object.entries(metadata.dependencies)
   .filter(
     ([name, version]) =>
@@ -49,9 +51,9 @@ export default {
   ],
   extraResources: [
     ...base.extraResources,
-    { from: "dcode-runtime-v3", to: "dsh-runtime", filter: ["**/*"] },
+    { from: runtimeDeploy.directoryName, to: "dsh-runtime", filter: ["**/*"] },
     // extraResources 默认过滤嵌套 node_modules，必须以它自身为复制根。
-    { from: "dcode-runtime-v3/node_modules", to: "dsh-runtime/node_modules", filter: ["**/*"] },
+    { from: `${runtimeDeploy.directoryName}/node_modules`, to: "dsh-runtime/node_modules", filter: ["**/*"] },
     { from: "../../LICENSE", to: "ZCode-LICENSE" },
     { from: "../../NOTICE.DCode.md", to: "NOTICE.DCode.md" },
   ],

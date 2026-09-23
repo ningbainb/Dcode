@@ -18,6 +18,11 @@ export function verifyDcodeRuntime(runtimeRoot) {
     await import(process.argv[1]);
     const require = createRequire(process.argv[1]);
     const root = fileURLToPath(new URL('../', process.argv[1]));
+    const runtimeManifest = JSON.parse(readFileSync(new URL('../package.json', process.argv[1]), 'utf8'));
+    for (const name of ['@deepseek-ai/dsh', '@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/dsh-mcp-client']) {
+      const actual = JSON.parse(readFileSync(require.resolve(name + '/package.json'), 'utf8'));
+      assert.equal(actual.version, runtimeManifest.dependencies[name]?.split('(')[0], name + ' packaged version mismatch');
+    }
     for (const name of ['ws', 'yaml', 'chokidar', '@deepseek-ai/dsh/lib/bin.js', '@deepseek-ai/dsh-base/package.json', '@deepseek-ai/dsh-web-app/package.json', '@deepseek-ai/dsh-mcp-client/package.json', '@playwright/mcp/package.json']) {
       assert.ok(require.resolve(name).startsWith(root), name + ' must resolve inside the packaged runtime');
     }
