@@ -218,6 +218,7 @@ export interface IDshService {
   cancel(sessionId: string): Promise<void>;
   respondApproval(sessionId: string, requestId: string, approved: boolean): Promise<void>;
   getLogsPath(): Promise<string>;
+  repairWindowsWorkspaceAcl(workspacePath: string): Promise<string>;
 }
 
 export const IDshService = createServiceDescriptor<IDshService>("dcode-dsh");

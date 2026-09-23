@@ -47,6 +47,11 @@ stream subscribers must close. Errors are surfaced and never replaced by fake an
 
 Development data and logs are inside the workspace. Packaged default data is DCode-specific.
 Models are obtained from DSH; model connectivity failures are reported as failures.
+On Windows, the optional workspace ACL repair is a user-commanded Host operation.
+It grants only the current user inheritable `WRITE_OWNER` on the canonical selected
+workspace directory after a matching DSH sandbox failure. It does not alter DSH
+permission mode, accept a drive root, or write another workspace. The next tool
+attempt remains DSH-owned; a successful ACL command is not a successful tool run.
 
 Acceptance scenarios: concurrent start is idempotent; startup failure is recoverable;
 session history survives runtime restart; workspace and model selection reach the agent;

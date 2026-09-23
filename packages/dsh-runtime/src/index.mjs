@@ -23,6 +23,7 @@ import {
   writeAgentPluginSettings,
 } from "./agent-plugins.mjs";
 import { readMcpServerSettings, writeMcpServerSettings } from "./mcp-servers.mjs";
+import { grantWindowsWorkspaceOwnerRight } from "./windows-workspace-acl.mjs";
 
 export class DshBackend extends EventEmitter {
   constructor(options) {
@@ -114,6 +115,9 @@ export class DshBackend extends EventEmitter {
   }
   async getLogsPath() {
     return this.lifecycle.logsPath;
+  }
+  async repairWindowsWorkspaceAcl(workspacePath) {
+    return grantWindowsWorkspaceOwnerRight(workspacePath);
   }
   async listSessionAnnotations(sessionId) {
     return this.annotations.list(sessionId);

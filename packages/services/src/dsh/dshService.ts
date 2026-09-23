@@ -75,6 +75,8 @@ export function createDshService(autoStart = false): IDshService {
     respondApproval: async (id, requestId, approved) =>
       (await backend).respondApproval(id, requestId, approved),
     getLogsPath: async () => (await backend).getLogsPath(),
+    repairWindowsWorkspaceAcl: async (workspacePath) =>
+      (await backend).repairWindowsWorkspaceAcl(workspacePath),
   };
   if (autoStart)
     void service.start().catch((error: unknown) => {

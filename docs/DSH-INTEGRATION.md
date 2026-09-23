@@ -24,4 +24,12 @@ DSH 是会话、消息、模型执行、工具调用和权限请求的事实来�
 Windows 安装包的物理 runtime 部署目录由 DSH 包版本与锁文件摘要共同命名。构建脚本与 electron-builder 使用同一个路径解析函数；依赖变化时创建新目录，而不是复用旧 `.dcode-deploy-ready` 标记。打包验证必须读取物理 runtime 中四个 DSH 直连包的实际版本并与项目清单一致。
 运行时验证必须从 Dcode 适配器的真实模块解析路径读取 `@deepseek-ai/dsh/package.json`，不能仅凭锁文件或根目录的包版本判断。0.1.7 的 app-boot 不再导出旧的 Profile module-fallback 修复函数，改由启动时创建不可变的 runtime resolution，并在 `boot` 期间挂载 `PluginPackages` 服务；Dcode launcher 复用这条上游启动路径。缺少该服务时插件会集体加载失败，不能以只通过静态类型检查视为升级完成。
 0.1.7 的浏览器令牌兑换仍返回带 session cookie 的 HTTP 303，但 `Location` 变为相对路径 `./`。就绪探测只接受 `./` 或 `/` 这两个首页重定向，并要求响应携带 cookie；跳转状态本身不足以证明运行时已就绪。
-在当前 Windows 非管理员账户上，0.1.7-alpha.2 默认 `workspace-write` PowerShell 沙箱调用 `SetNamedSecurityInfoW` 给工作区写入 ACL 时返回 Win32 5。全新测试目录也复现；仅测试进程设置 `DSH_PERMISSION_MODE=danger-full-access` 后 Shell E2E 通过。Dcode 生产 Profile 不自动关闭沙箱，此上游兼容问题解决前不发布包含该内核的新 Windows 安装包。
+在当前 Windows 非管理员账户上，0.1.7-alpha.2 默认 `workspace-write` PowerShell 沙箱调用 `SetNamedSecurityInfoW` 给工作区写入 ACL 时可能返回 Win32 5；全新测试目录也复现。Dcode 生产 Profile 不自动关闭沙箱，而是提供下述由用户触发的项目目录权限修复。发布新 Windows 安装包前仍需完成桌面端修复入口与默认沙箱的端到端验收。
+
+## Windows 工作区 ACL 修复
+
+0.1.7 的低完整性标签需要工作区目录具备 `WRITE_OWNER`。数据盘常见的 `Authenticated Users: Modify` 不含此权限；只在隔离项目目录给当前用户增加可继承的 `WRITE_OWNER` 后，默认 `workspace-write` 的 DSH 真实读、写、编辑和 PowerShell E2E 已通过。此修复与关闭沙箱不同，不修改 DSH 权限模式，也不授予整个磁盘权限。
+
+当当前工作区的 DSH 工具结果包含 `SetNamedSecurityInfoW failed (Win32 5): grantWrite(<当前工作区>)` 时，聊天显示一次明确的修复入口。用户点击后，Dcode Host 将路径规范化、拒绝盘符根目录与非目录目标，获取当前 Windows 用户 SID，然后通过无 shell 的 `icacls` 参数调用，仅在该目录增加 `(OI)(CI)(WO)` ACE。ZCode/DSH 会话与文件内容不写入该操作；修复失败显示错误且不切换到 `danger-full-access`。下一次工具调用继续由 DSH 正常沙箱检查。项目切换期间的迟到结果不得显示到新项目。
+
+验收：隔离目录在修复前复现 Win32 5，点击入口后当前项目 ACL 多出当前用户的可继承 `WRITE_OWNER`，同一项目的默认 `workspace-write` 工具真实执行成功；另一个项目的 ACL 保持原样。没有用户点击时不修改工作区 ACL。不同原因的工具错误不展示此入口。

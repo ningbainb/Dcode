@@ -101,6 +101,7 @@ export class DshBackend extends EventEmitter {
   stop(): Promise<void>;
   restart(): Promise<RuntimeHealth>;
   getLogsPath(): Promise<string>;
+  repairWindowsWorkspaceAcl(workspacePath: string): Promise<string>;
   getAgentPlugins(): Promise<AgentPluginStatus>;
   listMcpServers(): Promise<McpServerSettingsView>;
   updateMcpServers(servers: McpServer[], expectedRevision: string): Promise<McpServerSettingsView>;

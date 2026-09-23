@@ -21,6 +21,10 @@ message-level `isError`. The projection joins it to the preceding `tool/call` by
 including when reconstructing a snapshot; it also accepts the older nested
 `tool-result` block for previously imported history. A failed tool result must stay
 visibly failed rather than disappearing from the conversation.
+For the DSH 0.1.7 Windows `SetNamedSecurityInfoW ... grantWrite(project)` failure,
+the selected project's failed tool result shows an explicit ACL repair action. The UI
+does not change permissions automatically, and it does not show a different project's
+repair action after switching workspaces. After repair, the user retries the failed turn.
 
 Acceptance: create two sessions from the sidebar, switch between them and projects, send
 in each, restart the app, restore the chosen session, and verify no cross-session messages

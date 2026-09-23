@@ -21,6 +21,7 @@ import { clearDraftIfUnchanged, draftScopeKey, promoteDraftToSession } from "./c
 import { resolveZcodeCommandPrompt } from "./zcodeCommandPrompt.js";
 import "./dshChatReading.css";
 import { ImportedZcodeChatPanel } from "./ImportedZcodeChatPanel.js";
+import { needsWindowsAclRepair } from "./windowsAclRepair.js";
 
 const EMPTY_ANNOTATIONS: DshSessionAnnotation[] = [];
 
@@ -70,6 +71,12 @@ function DshLiveChatPanel({
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [projection, setProjection] = useState(emptyProjection);
   const [error, setError] = useState("");
+  const [aclRepairBusy, setAclRepairBusy] = useState(false);
+  const [aclRepairResult, setAclRepairResult] = useState<{
+    workspace: string;
+    message: string;
+    done: boolean;
+  } | null>(null);
   const [pending, setPending] = useState(false);
   const [approval, setApproval] = useState<Record<string, unknown> | null>(null);
   const [annotations, setAnnotations] = useState<DshSessionAnnotation[]>([]);
@@ -121,6 +128,9 @@ function DshLiveChatPanel({
         ? approval.description
         : copy.permissionDescription;
   const workspaceName = workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? workspacePath;
+  const showAclRepair =
+    needsWindowsAclRepair(projection.rows, workspacePath) &&
+    !(aclRepairResult?.workspace === workspacePath && aclRepairResult.done);
   const displayRows: Array<DshRow | DshRow[]> = [];
   for (const row of projection.rows) {
     const previous = displayRows.at(-1);
@@ -155,6 +165,8 @@ function DshLiveChatPanel({
     setSelectedAnnotationIds(null);
     setApproval(null);
     setError("");
+    setAclRepairResult(null);
+    setAclRepairBusy(false);
     setPending(false);
     void refresh().catch(report);
   }, [refresh]);
@@ -232,6 +244,7 @@ function DshLiveChatPanel({
     setAnnotations([]);
     setSelectedAnnotationIds(null);
     setError("");
+    setAclRepairResult(null);
     setApproval(null);
     setPending(true);
     try {
@@ -338,6 +351,32 @@ function DshLiveChatPanel({
       report(failure);
     }
   }
+  async function repairWorkspaceAcl() {
+    if (!service || aclRepairBusy) return;
+    const sourceWorkspace = workspacePath;
+    setAclRepairBusy(true);
+    setAclRepairResult(null);
+    try {
+      await service.repairWindowsWorkspaceAcl(sourceWorkspace);
+      if (selection.current.workspacePath === sourceWorkspace)
+        setAclRepairResult({
+          workspace: sourceWorkspace,
+          message: zh
+            ? "已为当前项目补充所需权限。请重新发送刚才失败的请求。"
+            : "Workspace permission repaired. Please resend the failed request.",
+          done: true,
+        });
+    } catch (failure) {
+      if (selection.current.workspacePath === sourceWorkspace)
+        setAclRepairResult({
+          workspace: sourceWorkspace,
+          message: failure instanceof Error ? failure.message : String(failure),
+          done: false,
+        });
+    } finally {
+      if (selection.current.workspacePath === sourceWorkspace) setAclRepairBusy(false);
+    }
+  }
   async function createAnnotation(input: DshSessionAnnotationInput) {
     if (!service || !selectedSessionId) return;
     await service.createSessionAnnotation(selectedSessionId, input);
@@ -382,6 +421,37 @@ function DshLiveChatPanel({
           >
             {copy.retry}
           </Button>
+        </div>
+      )}
+      {(showAclRepair || aclRepairResult?.workspace === workspacePath) && (
+        <div
+          role="status"
+          className="mx-auto mt-4 flex w-full max-w-[840px] items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-ui-sm text-foreground"
+          data-testid="dsh-windows-acl-repair"
+        >
+          <span>
+            {aclRepairResult?.workspace === workspacePath
+              ? aclRepairResult.message
+              : zh
+                ? "DSH 无法为当前项目启用 Windows 沙箱。可为当前项目目录补充所需权限。"
+                : "DSH could not enable the Windows sandbox for this project. Repair this project's permissions."}
+          </span>
+          {showAclRepair && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={aclRepairBusy}
+              onClick={() => void repairWorkspaceAcl()}
+            >
+              {aclRepairBusy
+                ? zh
+                  ? "修复中…"
+                  : "Repairing…"
+                : zh
+                  ? "修复权限"
+                  : "Repair permissions"}
+            </Button>
+          )}
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto" data-testid="dcode-messages">
